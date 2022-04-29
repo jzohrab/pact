@@ -11,3 +11,13 @@ source .venv/bin/activate
 
 deactivate
 ```
+
+## Dependencies
+
+Adding/freezing:
+
+```
+pip3 install X
+pip3 freeze > requirements.txt
+```
+
