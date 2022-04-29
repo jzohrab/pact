@@ -7,15 +7,12 @@ import tkinter.ttk as ttk
 import wave
 import os
 
-from datetime import datetime
-import shutil
 from matplotlib import pyplot
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from mutagen.mp3 import MP3
 from pydub import AudioSegment, playback
-import requests
 from tempfile import NamedTemporaryFile
 from tkinter import *
 from tkinter import filedialog
@@ -26,7 +23,7 @@ import configparser
 
 import voskutils
 import pactmusic
-from utils import TimeUtils
+from utils import TimeUtils, anki_card_export
 
 
 class BookmarkWindow(object):
@@ -156,6 +153,7 @@ class BookmarkWindow(object):
         self.root.grab_set()
         self.root.transient(parent)
 
+
     def get_slider_from_to(self, bk):
         sl_min = sl_max = None
         padding = 5000
@@ -176,6 +174,7 @@ class BookmarkWindow(object):
 
         return (sl_min, sl_max)
 
+
     def get_clip(self):
         cs = self.start_var.get()
         ce = self.end_var.get()
@@ -185,6 +184,7 @@ class BookmarkWindow(object):
         sound = BookmarkWindow.getFullAudioSegment(self.music_file)
         return sound[cs : ce]
         
+
     def play_clip(self):
         c = self.get_clip()
         if c is None:
@@ -221,72 +221,26 @@ class BookmarkWindow(object):
         self.bookmark.transcription = self.transcription_textbox.get(1.0, END)
         self.set_clip_bounds()
 
+
     def export(self):
         """Export the current clip and transcription to Anki using Ankiconnect."""
 
         self.save_clip()
-
-        print('export')
         c = self.get_clip()
         if c is None:
             print('no clip')
             return
 
-        config = configparser.ConfigParser()
-        config.read('config.ini')
-        # print(config)
-        config.write(sys.stdout)
-
-        destdir = config['Anki']['MediaFolder']
-
-        now = datetime.now() # current date and time
-        date_time = now.strftime("%Y%m%d_%H%M%S")
-        filename = f'clip_{date_time}_{id(c)}.mp3'
-        destname = os.path.join(destdir, filename)
-
-        with NamedTemporaryFile(suffix='.mp3') as temp:
-            c.export(temp.name, format="mp3")
-            shutil.copyfile(temp.name, destname)
-            # print('Generated temp clip:')
-            # print(temp.name)
-            # print('Copied clip to:')
-            # print(destname)
-
-        a = config['AnkiCard']
-
-        fields = {
-            a['AudioField']: f'[sound:{filename}]'
-        }
-
-        t = self.bookmark.transcription
-        if t is not None and t != '':
-            fields[ a['TranscriptionField'] ] = t
-
-        postjson = {
-            "action": "addNote",
-            "version": 6,
-            "params": {
-                "note": {
-                    "deckName": a['Deck'],
-                    "modelName": a['NoteType'],
-                    "fields": fields
-                }
-            }
-        }
-
-        print(postjson)
-        print('posting')
-        url = config['Anki']['Ankiconnect']
-        r = requests.post(url, json = postjson)
-        print('posted')
-        print(r.json())
+        r = anki_card_export(c, self.bookmark.transcription)
         e = r.json()['error']
         if e is not None:
             msg = f'Message from Anki/Ankiconnect: {e}'
             messagebox.showerror(title='Anki export failed', message=msg)
 
+
     def play_pause(self):
         self.music_player.play_pause()
+
 
     def update_play_button_text(self, music_player_state):
         txt = 'Play'
@@ -294,13 +248,16 @@ class BookmarkWindow(object):
             txt = 'Pause'
         self.play_btn.configure(text = txt)
 
+
     def ok(self):
         self.save_clip()
         self.root.grab_release()
         self.root.destroy()
 
+
     _full_audio_segment = None
     _old_music_file = None
+
 
     @classmethod
     def getFullAudioSegment(cls, f):
@@ -338,6 +295,7 @@ class BookmarkWindow(object):
             num = len(signal)
         )
         return (time, signal)
+
 
     def plot(self, frame, width_inches):
         """Draws plot, returns widget for subsequent placement."""
@@ -379,12 +337,6 @@ class MainWindow:
 
         self.music_file = None
         self.song_length_ms = 0
-
-        # start_pos_ms is set when the slider is manually
-        # repositioned.
-        self.start_pos_ms = 0
-
-        self.slider_update_id = None
 
         # Layout
         master_frame = Frame(window)
@@ -455,16 +407,6 @@ class MainWindow:
         window.bind('<d>', lambda e: self.delete_selected_bookmark())
         window.bind('<Return>', lambda e: self.popup_clip_window())
 
-        # self.hack_dev()
-
-    def hack_dev(self):
-        """During dev."""
-        print("Hack load song and bookmark")
-        self._load_song_details('/Users/jeff/Documents/Projects/pytubedl/sample/ten_seconds.mp3')
-        self.add_bookmark(3200)
-        self.bookmarks_lst.activate(1)
-        self.bookmarks_lst.select_set(1)
-        self.popup_clip_window()
 
     def popup_clip_window(self):
         i = self._selected_bookmark_index()
@@ -481,6 +423,7 @@ class MainWindow:
         self.reload_bookmark_list()
         self.move_to_bookmark(b)
 
+
     def reload_bookmark_list(self):
         selected_index = self._selected_bookmark_index()
         self.bookmarks_lst.delete(0, END)
@@ -490,6 +433,7 @@ class MainWindow:
             self.bookmarks_lst.activate(selected_index)
             self.bookmarks_lst.select_set(selected_index)
 
+
     def add_bookmark(self, m = None):
         v = m
         if v is None:
@@ -498,11 +442,13 @@ class MainWindow:
         self.bookmarks.append(b)
         self.bookmarks_lst.insert(END, b.display())
 
+
     def _selected_bookmark_index(self):
         s = self.bookmarks_lst.curselection()
         if len(s) == 0:
             return None
         return int(s[0])
+
 
     def update_selected_bookmark(self, new_value_ms):
         i = self._selected_bookmark_index()
@@ -514,6 +460,7 @@ class MainWindow:
         b.position_ms = new_value_ms
         self.reload_bookmark_list()
 
+
     def delete_selected_bookmark(self):
         index = self._selected_bookmark_index()
         if not index or index == 0:
@@ -521,11 +468,13 @@ class MainWindow:
         del self.bookmarks[index]
         self.reload_bookmark_list()
 
+
     def on_bookmark_select(self, event):
         index = self._selected_bookmark_index()
         if not index:
             return
         self.move_to_bookmark(self.bookmarks[index])
+
 
     def move_to_bookmark(self, b):
         self.music_player.reposition(b.position_ms)
@@ -538,6 +487,7 @@ class MainWindow:
         else:
             print("no file?")
 
+
     def _load_song_details(self, f):
         song_mut = MP3(f)
         self.song_length_ms = song_mut.info.length * 1000  # length is in seconds
@@ -548,14 +498,17 @@ class MainWindow:
         self.bookmarks = [ MainWindow.FullTrackBookmark() ]
         self.reload_bookmark_list()
 
+
     def play_pause(self):
         self.music_player.play_pause()
+
 
     def update_play_button_text(self, music_player_state):
         txt = 'Play'
         if music_player_state is pactmusic.MusicPlayer.State.PLAYING:
             txt = 'Pause'
         self.play_btn.configure(text = txt)
+
 
     def quit(self):
         self.music_player.stop()
