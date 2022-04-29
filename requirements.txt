@@ -1,3 +1,4 @@
+cffi==1.15.0
 cycler==0.11.0
 fonttools==4.33.3
 kiwisolver==1.4.2
@@ -5,6 +6,8 @@ matplotlib==3.5.1
 numpy==1.22.3
 packaging==21.3
 Pillow==9.1.0
+pycparser==2.21
 pyparsing==3.0.8
 python-dateutil==2.8.2
 six==1.16.0
+vosk==0.3.32
