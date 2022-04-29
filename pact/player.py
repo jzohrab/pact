@@ -23,7 +23,7 @@ from tkinter import *
 from tkinter import filedialog
 from tkinter import messagebox
 
-from voskutils import transcribe_audiosegment, TranscriptionCallback
+import voskutils
 import json
 import configparser
 
@@ -402,78 +402,12 @@ class BookmarkWindow(object):
         playback.play(c)
 
 
-    class TextCallback(TranscriptionCallback):
-
-        def __init__(self, rootwindow, textbox):
-            super()
-            self._totalbytes = 100
-            self._bytesread = 0
-            self._pct = 0
-            self._last_pct = 0
-
-            self.current_partial_result = None
-
-            # Vosk returns 'partial results' as it processes, but then
-            # each individual sentence (as best as Vosk can determine)
-            # is returned as a 'result', or a 'final result'.
-            self.sentences = []
-
-            self.transcription_textbox = textbox
-
-            # Handle to main window to force updates.
-            # Hacky, really this should be moved to a thread or subprocess.
-            self.rootwindow = rootwindow
-
-        def totalbytes(self, t):
-            print(f'About to read {t}')
-            self._totalbytes = t
-
-        def bytesread(self, b):
-            self._bytesread += b
-            print('.', end='', flush=True)
-            self._pct = int((self._bytesread / self._totalbytes) * 100)
-            if self._pct - self._last_pct >= 10:
-                self.alert_update()
-                self._last_pct = self._pct
-
-        def transcription(self):
-            tmp = self.sentences.copy()
-            if self.current_partial_result:
-                tmp.append(self.current_partial_result)
-            return '. '.join(self.sentences)
-
-        def alert_update(self):
-            print()
-            print(f'{self._pct}%: {self.transcription()}')
-
-            t = self.transcription_textbox
-            t.delete(1.0, END)  # Weird that it's 1.0 ... ref stackoverflow question 27966626.
-            t.insert(1.0, self.transcription())
-
-            self.rootwindow.update() # Update the UI, since this is blocking the main thread.
-
-        def partial_result(self, r):
-            t = json.loads(r)
-            self.current_partial_result = t.get('partial')
-
-        def result(self, r):
-            t = json.loads(r)
-            self.sentences.append(t.get('text'))
-            self.current_partial_result = None
-
-        def final_result(self, r):
-            self.result(r)
-            self.alert_update()
-            print()
-            print('done')
-
-
     def transcribe(self):
         c = self.get_clip()
         if c is None:
             return
-        cb = BookmarkWindow.TextCallback(self.parent, self.transcription_textbox)
-        transcribe_audiosegment(c, cb)
+        cb = voskutils.TextCallback(self.parent, self.transcription_textbox)
+        voskutils.transcribe_audiosegment(c, cb)
 
 
     def set_clip_bounds(self):
