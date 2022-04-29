@@ -23,6 +23,201 @@ import pactmusic
 from utils import TimeUtils, anki_card_export
 
 
+class MainWindow:
+
+    class FullTrackBookmark(pactmusic.Bookmark):
+        def __init__(self):
+            super().__init__(0)
+        def display(self):
+            return "<Full Track>"
+
+
+    def __init__(self, window):
+        window.title('MP3 Player')
+        window.geometry('600x400')
+        self.window = window
+
+        self.music_file = None
+        self.song_length_ms = 0
+
+        # Layout
+        master_frame = Frame(window)
+        master_frame.grid(row=0, column=0, padx=50, pady=50)
+
+        bk_frame = Frame(master_frame)
+        bk_frame.grid(row=2, column=0, pady=10)
+
+        # The bookmarks saved during play.
+        self.bookmarks = []
+        self.bookmarks_lst = Listbox(
+            bk_frame,
+            width=50,
+            selectbackground="yellow",
+            selectforeground="black")
+        self.bookmarks_lst.grid(row=0, column=1)
+        self.bookmarks_lst.bind('<<ListboxSelect>>', self.on_bookmark_select)
+
+        scrollbar = ttk.Scrollbar(bk_frame, orient= 'vertical')
+        scrollbar.grid(row=0, column=2, sticky='NS')
+        self.bookmarks_lst.config(yscrollcommand= scrollbar.set)
+        scrollbar.config(command= self.bookmarks_lst.yview)
+
+        ctl_frame = Frame(master_frame)
+        ctl_frame.grid(row=1, column=0, pady=10)
+
+        def _make_button(text, column, command):
+            b = Button(ctl_frame, text=text, width=8, command=command)
+            b.grid(row=0, column=column, padx=5)
+            return b
+
+        _make_button('Load', 1, self.load)
+        self.play_btn = _make_button('Play', 2, self.play_pause)
+        _make_button('Bookmark', 3, self.add_bookmark)
+        _make_button('Delete', 4, self.delete_selected_bookmark)
+        _make_button('Clip', 5, self.popup_clip_window)
+
+        slider_frame = Frame(master_frame)
+        slider_frame.grid(row=0, column=0, pady=5)
+
+        self.slider_var = DoubleVar()
+
+        self.slider = ttk.Scale(
+            slider_frame,
+            from_=0,
+            to=100,
+            orient=HORIZONTAL,
+            variable = self.slider_var,
+            length=360)
+        self.slider.grid(row=0, column=1, pady=0)
+
+        self.slider_lbl = Label(slider_frame, text='')
+        self.slider_lbl.grid(row=1, column=1, pady=2)
+        def update_slider_label(a, b, c):
+            self.slider_lbl.configure(text=TimeUtils.time_string(self.slider_var.get()))
+        self.slider_var.trace('w', update_slider_label)
+
+        self.music_player = pactmusic.MusicPlayer(self.slider, self.update_play_button_text)
+
+        # Previously, I had 'space' handle start/stop, but that
+        # also triggers a re-selection of the currently selected
+        # bookmark.
+        window.bind('<Command-p>', lambda e: self.play_pause())
+        window.bind('<Right>', lambda e: self.music_player.increment(100))
+        window.bind('<Left>', lambda e: self.music_player.increment(-100))
+        window.bind('<m>', lambda e: self.add_bookmark(float(self.slider.get())))
+        window.bind('<u>', lambda e: self.update_selected_bookmark(float(self.slider.get())))
+        window.bind('<d>', lambda e: self.delete_selected_bookmark())
+        window.bind('<Return>', lambda e: self.popup_clip_window())
+
+
+    def popup_clip_window(self):
+        i = self._selected_bookmark_index()
+        if not i:
+            return
+        b = self.bookmarks[i]
+
+        d = BookmarkWindow(self.window, b, self.music_file, self.song_length_ms)
+        self.window.wait_window(d.root)
+        d.root.grab_release()
+        # Re-select, b/c switching to the pop-up deselects the current.
+        self.bookmarks_lst.activate(i)
+        self.bookmarks_lst.select_set(i)
+        self.reload_bookmark_list()
+        self.move_to_bookmark(b)
+
+
+    def reload_bookmark_list(self):
+        selected_index = self._selected_bookmark_index()
+        self.bookmarks_lst.delete(0, END)
+        for b in self.bookmarks:
+            self.bookmarks_lst.insert(END, b.display())
+        if selected_index:
+            self.bookmarks_lst.activate(selected_index)
+            self.bookmarks_lst.select_set(selected_index)
+
+
+    def add_bookmark(self, m = None):
+        v = m
+        if v is None:
+            v = float(self.slider.get())
+        b = pactmusic.Bookmark(v)
+        self.bookmarks.append(b)
+        self.bookmarks_lst.insert(END, b.display())
+
+
+    def _selected_bookmark_index(self):
+        s = self.bookmarks_lst.curselection()
+        if len(s) == 0:
+            return None
+        return int(s[0])
+
+
+    def update_selected_bookmark(self, new_value_ms):
+        i = self._selected_bookmark_index()
+        if not i:
+            return
+        b = self.bookmarks[i]
+        if (b.position_ms == new_value_ms):
+            return
+        b.position_ms = new_value_ms
+        self.reload_bookmark_list()
+
+
+    def delete_selected_bookmark(self):
+        index = self._selected_bookmark_index()
+        if not index or index == 0:
+            return
+        del self.bookmarks[index]
+        self.reload_bookmark_list()
+
+
+    def on_bookmark_select(self, event):
+        index = self._selected_bookmark_index()
+        if not index:
+            return
+        self.move_to_bookmark(self.bookmarks[index])
+
+
+    def move_to_bookmark(self, b):
+        self.music_player.reposition(b.position_ms)
+
+
+    def load(self):
+        f = filedialog.askopenfilename()
+        if f:
+            self._load_song_details(f)
+        else:
+            print("no file?")
+
+
+    def _load_song_details(self, f):
+        song_mut = MP3(f)
+        self.song_length_ms = song_mut.info.length * 1000  # length is in seconds
+        self.slider.config(to = self.song_length_ms, value=0)
+        self.slider_lbl.configure(text=TimeUtils.time_string(self.song_length_ms))
+        self.music_file = f
+        self.music_player.load_song(f, self.song_length_ms)
+        self.bookmarks = [ MainWindow.FullTrackBookmark() ]
+        self.reload_bookmark_list()
+
+
+    def play_pause(self):
+        self.music_player.play_pause()
+
+
+    def update_play_button_text(self, music_player_state):
+        txt = 'Play'
+        if music_player_state is pactmusic.MusicPlayer.State.PLAYING:
+            txt = 'Pause'
+        self.play_btn.configure(text = txt)
+
+
+    def quit(self):
+        self.music_player.stop()
+        self.window.destroy()
+
+
+
 class BookmarkWindow(object):
     """Bookmark / clip editing window."""
 
@@ -315,201 +510,6 @@ class BookmarkWindow(object):
         
         canvas = FigureCanvasTkAgg(fig, master = frame)
         return canvas.get_tk_widget()
-
-
-class MainWindow:
-
-
-    class FullTrackBookmark(pactmusic.Bookmark):
-        def __init__(self):
-            super().__init__(0)
-        def display(self):
-            return "<Full Track>"
-
-
-    def __init__(self, window):
-        window.title('MP3 Player')
-        window.geometry('600x400')
-        self.window = window
-
-        self.music_file = None
-        self.song_length_ms = 0
-
-        # Layout
-        master_frame = Frame(window)
-        master_frame.grid(row=0, column=0, padx=50, pady=50)
-
-        bk_frame = Frame(master_frame)
-        bk_frame.grid(row=2, column=0, pady=10)
-
-        # The bookmarks saved during play.
-        self.bookmarks = []
-        self.bookmarks_lst = Listbox(
-            bk_frame,
-            width=50,
-            selectbackground="yellow",
-            selectforeground="black")
-        self.bookmarks_lst.grid(row=0, column=1)
-        self.bookmarks_lst.bind('<<ListboxSelect>>', self.on_bookmark_select)
-
-        scrollbar = ttk.Scrollbar(bk_frame, orient= 'vertical')
-        scrollbar.grid(row=0, column=2, sticky='NS')
-        self.bookmarks_lst.config(yscrollcommand= scrollbar.set)
-        scrollbar.config(command= self.bookmarks_lst.yview)
-
-        ctl_frame = Frame(master_frame)
-        ctl_frame.grid(row=1, column=0, pady=10)
-
-        def _make_button(text, column, command):
-            b = Button(ctl_frame, text=text, width=8, command=command)
-            b.grid(row=0, column=column, padx=5)
-            return b
-
-        _make_button('Load', 1, self.load)
-        self.play_btn = _make_button('Play', 2, self.play_pause)
-        _make_button('Bookmark', 3, self.add_bookmark)
-        _make_button('Delete', 4, self.delete_selected_bookmark)
-        _make_button('Clip', 5, self.popup_clip_window)
-
-        slider_frame = Frame(master_frame)
-        slider_frame.grid(row=0, column=0, pady=5)
-
-        self.slider_var = DoubleVar()
-
-        self.slider = ttk.Scale(
-            slider_frame,
-            from_=0,
-            to=100,
-            orient=HORIZONTAL,
-            variable = self.slider_var,
-            length=360)
-        self.slider.grid(row=0, column=1, pady=0)
-
-        self.slider_lbl = Label(slider_frame, text='')
-        self.slider_lbl.grid(row=1, column=1, pady=2)
-        def update_slider_label(a, b, c):
-            self.slider_lbl.configure(text=TimeUtils.time_string(self.slider_var.get()))
-        self.slider_var.trace('w', update_slider_label)
-
-        self.music_player = pactmusic.MusicPlayer(self.slider, self.update_play_button_text)
-
-        # Previously, I had 'space' handle start/stop, but that
-        # also triggers a re-selection of the currently selected
-        # bookmark.
-        window.bind('<Command-p>', lambda e: self.play_pause())
-        window.bind('<Right>', lambda e: self.music_player.increment(100))
-        window.bind('<Left>', lambda e: self.music_player.increment(-100))
-        window.bind('<m>', lambda e: self.add_bookmark(float(self.slider.get())))
-        window.bind('<u>', lambda e: self.update_selected_bookmark(float(self.slider.get())))
-        window.bind('<d>', lambda e: self.delete_selected_bookmark())
-        window.bind('<Return>', lambda e: self.popup_clip_window())
-
-
-    def popup_clip_window(self):
-        i = self._selected_bookmark_index()
-        if not i:
-            return
-        b = self.bookmarks[i]
-
-        d = BookmarkWindow(self.window, b, self.music_file, self.song_length_ms)
-        self.window.wait_window(d.root)
-        d.root.grab_release()
-        # Re-select, b/c switching to the pop-up deselects the current.
-        self.bookmarks_lst.activate(i)
-        self.bookmarks_lst.select_set(i)
-        self.reload_bookmark_list()
-        self.move_to_bookmark(b)
-
-
-    def reload_bookmark_list(self):
-        selected_index = self._selected_bookmark_index()
-        self.bookmarks_lst.delete(0, END)
-        for b in self.bookmarks:
-            self.bookmarks_lst.insert(END, b.display())
-        if selected_index:
-            self.bookmarks_lst.activate(selected_index)
-            self.bookmarks_lst.select_set(selected_index)
-
-
-    def add_bookmark(self, m = None):
-        v = m
-        if v is None:
-            v = float(self.slider.get())
-        b = pactmusic.Bookmark(v)
-        self.bookmarks.append(b)
-        self.bookmarks_lst.insert(END, b.display())
-
-
-    def _selected_bookmark_index(self):
-        s = self.bookmarks_lst.curselection()
-        if len(s) == 0:
-            return None
-        return int(s[0])
-
-
-    def update_selected_bookmark(self, new_value_ms):
-        i = self._selected_bookmark_index()
-        if not i:
-            return
-        b = self.bookmarks[i]
-        if (b.position_ms == new_value_ms):
-            return
-        b.position_ms = new_value_ms
-        self.reload_bookmark_list()
-
-
-    def delete_selected_bookmark(self):
-        index = self._selected_bookmark_index()
-        if not index or index == 0:
-            return
-        del self.bookmarks[index]
-        self.reload_bookmark_list()
-
-
-    def on_bookmark_select(self, event):
-        index = self._selected_bookmark_index()
-        if not index:
-            return
-        self.move_to_bookmark(self.bookmarks[index])
-
-
-    def move_to_bookmark(self, b):
-        self.music_player.reposition(b.position_ms)
-
-
-    def load(self):
-        f = filedialog.askopenfilename()
-        if f:
-            self._load_song_details(f)
-        else:
-            print("no file?")
-
-
-    def _load_song_details(self, f):
-        song_mut = MP3(f)
-        self.song_length_ms = song_mut.info.length * 1000  # length is in seconds
-        self.slider.config(to = self.song_length_ms, value=0)
-        self.slider_lbl.configure(text=TimeUtils.time_string(self.song_length_ms))
-        self.music_file = f
-        self.music_player.load_song(f, self.song_length_ms)
-        self.bookmarks = [ MainWindow.FullTrackBookmark() ]
-        self.reload_bookmark_list()
-
-
-    def play_pause(self):
-        self.music_player.play_pause()
-
-
-    def update_play_button_text(self, music_player_state):
-        txt = 'Play'
-        if music_player_state is pactmusic.MusicPlayer.State.PLAYING:
-            txt = 'Pause'
-        self.play_btn.configure(text = txt)
-
-
-    def quit(self):
-        self.music_player.stop()
-        self.window.destroy()
 
 
 from pygame import mixer
