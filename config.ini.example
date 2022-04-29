@@ -1,0 +1,11 @@
+# Config file.
+
+[Anki]
+Ankiconnect = http://localhost:8765/
+MediaFolder = /Users/jeff/Library/Application Support/Anki2/User 1/collection.media/
+
+[AnkiCard]
+Deck = Spanish::03_Spanish_audio
+NoteType = Audio_clip
+AudioField = Audio
+TranscriptionField = Text
