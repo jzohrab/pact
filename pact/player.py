@@ -1,14 +1,14 @@
-#####
-# Clip player
-###
+# GUI
 
+import configparser
+import json
+import matplotlib.pyplot as plt
 import numpy as np
+import os
 import tkinter.ttk as ttk
 import wave
-import os
 
 from matplotlib import pyplot
-import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from mutagen.mp3 import MP3
@@ -17,9 +17,6 @@ from tempfile import NamedTemporaryFile
 from tkinter import *
 from tkinter import filedialog
 from tkinter import messagebox
-
-import json
-import configparser
 
 import voskutils
 import pactmusic
