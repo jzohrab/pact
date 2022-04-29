@@ -1,11 +1,11 @@
 from pydub import AudioSegment
 from pydub import playback
-from pydub.silence import split_on_silence
 import os
 import sys
 from vosk import Model, KaldiRecognizer, SetLogLevel
 import wave
 from tempfile import NamedTemporaryFile
+import json
 
 SetLogLevel(-1)
 
@@ -19,6 +19,49 @@ class TranscriptionCallback(object):
     def result(self, r): pass
     def final_result(self, r): pass
     
+
+class ConsoleCallback(TranscriptionCallback):
+
+    def __init__(self):
+        super()
+        self._totalbytes = 100
+        self._bytesread = 0
+        self._pct = 0
+        self._last_pct = 0
+        self.latest_result = None
+
+    def totalbytes(self, t):
+        print(f'About to read {t}')
+        self._totalbytes = t
+
+    def bytesread(self, b):
+        self._bytesread += b
+        print('.', end='', flush=True)
+        self._pct = int((self._bytesread / self._totalbytes) * 100)
+        if self._pct - self._last_pct > 10:
+            self.alert_update()
+            self._last_pct = self._pct
+
+    def alert_update(self):
+        print()
+        print(f'{self._pct}%: {self.latest_result}')
+
+    def partial_result(self, r):
+        # print(r)
+        t = json.loads(r)
+        self.latest_result = t.get('partial')
+
+    def result(self, r):
+        # print(r)
+        t = json.loads(r)
+        self.latest_result = t.get('partial')
+
+    def final_result(self, r):
+        # print(r)
+        t = json.loads(r)
+        self.latest_result = t.get('text')
+        self.alert_update()
+
 
 def transcribe_wav(f, callback):
     """Transcrabe a .wav file, calling back to provide updates.
@@ -80,52 +123,7 @@ def transcribe_audiosegment(chunk, cb = TranscriptionCallback()):
 
 def main():
 
-    import json
-
-    class ConsoleCallback(TranscriptionCallback):
-
-        def __init__(self):
-            super()
-            self._totalbytes = 100
-            self._bytesread = 0
-            self._pct = 0
-            self._last_pct = 0
-            self.latest_result = None
-
-        def totalbytes(self, t):
-            print(f'About to read {t}')
-            self._totalbytes = t
-
-        def bytesread(self, b):
-            self._bytesread += b
-            print('.', end='', flush=True)
-            self._pct = int((self._bytesread / self._totalbytes) * 100)
-            if self._pct - self._last_pct > 10:
-                self.alert_update()
-                self._last_pct = self._pct
-
-        def alert_update(self):
-            print()
-            print(f'{self._pct}%: {self.latest_result}')
-
-        def partial_result(self, r):
-            # print(r)
-            t = json.loads(r)
-            self.latest_result = t.get('partial')
-
-        def result(self, r):
-            # print(r)
-            t = json.loads(r)
-            self.latest_result = t.get('partial')
-
-        def final_result(self, r):
-            # print(r)
-            t = json.loads(r)
-            self.latest_result = t.get('text')
-            self.alert_update()
-
-    f = "downloads/test_split.mp3"
-    print("loading song")
+    f = "samples/spanish_10_seconds.mp3"
     song = AudioSegment.from_mp3(f)
     print("making chunk")
     duration = 5 * 1000  # ms
