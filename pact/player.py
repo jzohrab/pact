@@ -341,13 +341,8 @@ class BookmarkWindow(object):
 
     def plot(self, frame, width_inches):
         """Draws plot, returns widget for subsequent placement."""
-
         fig, plot1 = plt.subplots()
         fig.set_size_inches(width_inches, 1)
-
-        # https://stackoverflow.com/questions/40325321/
-        #  python-embed-a-matplotlib-plot-with-slider-in-tkinter-properly
-        canvas = FigureCanvasTkAgg(fig, master = frame)
 
         # ref https://stackoverflow.com/questions/2176424/
         #   hiding-axis-text-in-matplotlib-plots
@@ -362,16 +357,8 @@ class BookmarkWindow(object):
 
         time, signal = self.signal_plot_data
         plot1.plot(signal)
-        # Note we can also do lot1.plot(time, signal), but that
-        # doesn't work well with axvspans, as far as I can tell.
         
-        # To shade a time span, we have to translate the time into the
-        # corresponding index in the signal array.
-        def signal_array_index(t_ms):
-            span = self.to_val - self.from_val
-            pct = (t_ms - self.from_val) / span
-            return len(self.signal_plot_data) * pct
-
+        canvas = FigureCanvasTkAgg(fig, master = frame)
         return canvas.get_tk_widget()
 
 
