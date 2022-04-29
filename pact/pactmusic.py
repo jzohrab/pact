@@ -1,7 +1,7 @@
 from pygame import mixer
 from enum import Enum
 
-from utils import TimeUtils
+from pact.utils import TimeUtils
 
 
 class MusicPlayer:

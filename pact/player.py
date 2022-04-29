@@ -18,14 +18,14 @@ from tkinter import *
 from tkinter import filedialog
 from tkinter import messagebox
 
-import voskutils
-import pactmusic
-from utils import TimeUtils, anki_card_export
+import pact.voskutils
+import pact.pactmusic
+from pact.utils import TimeUtils, anki_card_export
 
 
 class MainWindow:
 
-    class FullTrackBookmark(pactmusic.Bookmark):
+    class FullTrackBookmark(pact.pactmusic.Bookmark):
         def __init__(self):
             super().__init__(0)
         def display(self):
@@ -96,7 +96,7 @@ class MainWindow:
             self.slider_lbl.configure(text=TimeUtils.time_string(self.slider_var.get()))
         self.slider_var.trace('w', update_slider_label)
 
-        self.music_player = pactmusic.MusicPlayer(self.slider, self.update_play_button_text)
+        self.music_player = pact.pactmusic.MusicPlayer(self.slider, self.update_play_button_text)
 
         # Previously, I had 'space' handle start/stop, but that
         # also triggers a re-selection of the currently selected
@@ -140,7 +140,7 @@ class MainWindow:
         v = m
         if v is None:
             v = float(self.slider.get())
-        b = pactmusic.Bookmark(v)
+        b = pact.pactmusic.Bookmark(v)
         self.bookmarks.append(b)
         self.bookmarks_lst.insert(END, b.display())
 
@@ -207,7 +207,7 @@ class MainWindow:
 
     def update_play_button_text(self, music_player_state):
         txt = 'Play'
-        if music_player_state is pactmusic.MusicPlayer.State.PLAYING:
+        if music_player_state is pact.pactmusic.MusicPlayer.State.PLAYING:
             txt = 'Pause'
         self.play_btn.configure(text = txt)
 
@@ -318,7 +318,7 @@ class BookmarkWindow(object):
             b.grid(row=0, column = index, padx=5)
 
 
-        self.music_player = pactmusic.MusicPlayer(self.slider, self.update_play_button_text)
+        self.music_player = pact.pactmusic.MusicPlayer(self.slider, self.update_play_button_text)
         self.music_player.load_song(music_file, song_length_ms)
         self.music_player.reposition(clip_bounds[0])
         # print(f'VALS: from={from_val}, to={to_val}, val={bookmark.position_ms}')
@@ -388,8 +388,8 @@ class BookmarkWindow(object):
         c = self.get_clip()
         if c is None:
             return
-        cb = voskutils.TextCallback(self.parent, self.transcription_textbox)
-        voskutils.transcribe_audiosegment(c, cb)
+        cb = pact.voskutils.TextCallback(self.parent, self.transcription_textbox)
+        pact.voskutils.transcribe_audiosegment(c, cb)
 
 
     def set_clip_bounds(self):
@@ -436,7 +436,7 @@ class BookmarkWindow(object):
 
     def update_play_button_text(self, music_player_state):
         txt = 'Play'
-        if music_player_state is pactmusic.MusicPlayer.State.PLAYING:
+        if music_player_state is pact.pactmusic.MusicPlayer.State.PLAYING:
             txt = 'Pause'
         self.play_btn.configure(text = txt)
 
@@ -510,11 +510,3 @@ class BookmarkWindow(object):
         
         canvas = FigureCanvasTkAgg(fig, master = frame)
         return canvas.get_tk_widget()
-
-
-from pygame import mixer
-
-root = Tk()
-mixer.init()
-app = MainWindow(root)
-root.mainloop()
