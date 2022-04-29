@@ -582,70 +582,7 @@ class BookmarkWindow(object):
             pct = (t_ms - self.from_val) / span
             return len(self.signal_plot_data) * pct
 
-        ## Deactivating shading code for now.
-        ### cs, ce = self.bookmark.clip_bounds_ms
-        ### if (cs is not None and ce is not None):
-        ###     shade_start = signal_array_index(cs)
-        ###     shade_end = signal_array_index(ce)
-        ###     self.axv = plot1.axvspan(shade_start, shade_end, alpha=0.25, color='blue')
-
         return canvas.get_tk_widget()
-
-        # canvas.draw()
-
-
-    ### Dead code, previously in __init__. Attempt to define clips
-    ### using a slider.  Keeping this in case it's useful in the
-    ### future.
-    #
-    ### self.clip_slider = Scale(
-    ###     slider_frame,
-    ###     from_=self.from_val,
-    ###     to=self.to_val,
-    ###     orient=HORIZONTAL,
-    ###     length= sllen)
-    ### self.clip_slider.grid(row=4, column=0, pady=10)
-    ### self.clip_slider.bind('<Button-1>', self.clip_slider_click)
-    ### self.clip_slider.bind('<ButtonRelease-1>', self.clip_slider_unclick)
-    ### self.clip_down_ms = None
-    ### self.clip_up_ms = None
-    ### self.clip_after_id = None
-    ### self.clip_bounds_ms = (None, None)
-
-    ### Dead code. Attempt to define clips using a slider.
-    ### Keeping this in case it's useful in the future.
-    ### def clip_slider_click(self, event):
-    ###     self.clip_down_ms = self.clip_slider.get()
-    ###     self.clip_up_ms = None
-    ###     self.cancel_clip_slider_updates()
-    ###     self.clip_slider_update()
-
-    ### def clip_slider_unclick(self, event):
-    ###     self.clip_up_ms = self.clip_slider.get()
-    ###     self.cancel_clip_slider_updates()
-    ###     self.save_clip()
-    ###     self.plot()
-
-    ### def cancel_clip_slider_updates(self):
-    ###     print(f'cancelling updates, current = {self.clip_after_id}')
-    ###     if self.clip_after_id is not None:
-    ###         self.clip_slider.after_cancel(self.clip_after_id)
-    ###     self.clip_after_id = None
-
-    ### def clip_slider_update(self):
-    ###     print(f'  UPDATE, clip = {(self.clip_down_ms, self.clip_up_ms)}')
-    ###     self.clip_up_ms = self.clip_slider.get()
-    ###     self.save_clip()
-    ###     self.clip_after_id = self.clip_slider.after(500, self.clip_slider_update)
-
-    ### def save_clip(self):
-    ###     if (self.clip_down_ms is None or
-    ###         self.clip_up_ms is None or
-    ###         self.clip_up_ms < self.clip_down_ms):
-    ###         return
-    ###     self.clip_bounds_ms = (self.clip_down_ms, self.clip_up_ms)
-    ###     print(f'clip bounds: {self.clip_bounds_ms}')
-    ###     self.bookmark.clip_bounds_ms = self.clip_bounds_ms
 
 
 class MainWindow:
