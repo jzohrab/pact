@@ -19,13 +19,13 @@ from tkinter import filedialog
 from tkinter import messagebox
 
 import pact.voskutils
-import pact.pactmusic
+import pact.music
 from pact.utils import TimeUtils, anki_card_export
 
 
 class MainWindow:
 
-    class FullTrackBookmark(pact.pactmusic.Bookmark):
+    class FullTrackBookmark(pact.music.Bookmark):
         def __init__(self):
             super().__init__(0)
         def display(self):
@@ -96,7 +96,7 @@ class MainWindow:
             self.slider_lbl.configure(text=TimeUtils.time_string(self.slider_var.get()))
         self.slider_var.trace('w', update_slider_label)
 
-        self.music_player = pact.pactmusic.MusicPlayer(self.slider, self.update_play_button_text)
+        self.music_player = pact.music.MusicPlayer(self.slider, self.update_play_button_text)
 
         # Previously, I had 'space' handle start/stop, but that
         # also triggers a re-selection of the currently selected
@@ -140,7 +140,7 @@ class MainWindow:
         v = m
         if v is None:
             v = float(self.slider.get())
-        b = pact.pactmusic.Bookmark(v)
+        b = pact.music.Bookmark(v)
         self.bookmarks.append(b)
         self.bookmarks_lst.insert(END, b.display())
 
@@ -207,7 +207,7 @@ class MainWindow:
 
     def update_play_button_text(self, music_player_state):
         txt = 'Play'
-        if music_player_state is pact.pactmusic.MusicPlayer.State.PLAYING:
+        if music_player_state is pact.music.MusicPlayer.State.PLAYING:
             txt = 'Pause'
         self.play_btn.configure(text = txt)
 
@@ -318,7 +318,7 @@ class BookmarkWindow(object):
             b.grid(row=0, column = index, padx=5)
 
 
-        self.music_player = pact.pactmusic.MusicPlayer(self.slider, self.update_play_button_text)
+        self.music_player = pact.music.MusicPlayer(self.slider, self.update_play_button_text)
         self.music_player.load_song(music_file, song_length_ms)
         self.music_player.reposition(clip_bounds[0])
         # print(f'VALS: from={from_val}, to={to_val}, val={bookmark.position_ms}')
@@ -436,7 +436,7 @@ class BookmarkWindow(object):
 
     def update_play_button_text(self, music_player_state):
         txt = 'Play'
-        if music_player_state is pact.pactmusic.MusicPlayer.State.PLAYING:
+        if music_player_state is pact.music.MusicPlayer.State.PLAYING:
             txt = 'Pause'
         self.play_btn.configure(text = txt)
 

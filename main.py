@@ -1,8 +1,8 @@
 from pygame import mixer
 from tkinter import Tk
-from pact import player
+from pact import gui
 
 root = Tk()
 mixer.init()
-app = player.MainWindow(root)
+app = gui.MainWindow(root)
 root.mainloop()
