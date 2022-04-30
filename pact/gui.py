@@ -154,7 +154,13 @@ class MainWindow:
             v = float(self.slider.get())
         b = pact.music.Bookmark(v)
         self.bookmarks.append(b)
-        self.bookmarks_lst.insert(END, b.display())
+        i = len(self.bookmarks) - 1
+
+        lst = self.bookmarks_lst
+        lst.selection_clear(0, END)
+        lst.insert(END, b.display())
+        lst.activate(i)
+        lst.select_set(i)
 
 
     def _selected_bookmark_index(self):
