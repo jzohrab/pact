@@ -85,3 +85,11 @@ pip3 install X
 pip3 freeze > requirements.txt
 ```
 
+## Extra config settings
+
+Preload an mp3 file during dev, add this to the config.ini:
+
+```
+[Dev]
+LoadFile = /path/to/file.mp3
+```

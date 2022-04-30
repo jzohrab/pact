@@ -109,6 +109,18 @@ class MainWindow:
         window.bind('<d>', lambda e: self.delete_selected_bookmark())
         window.bind('<Return>', lambda e: self.popup_clip_window())
 
+        self.init_dev()
+
+
+    def init_dev(self):
+        config = configparser.ConfigParser()
+        config.read('config.ini')
+        devsettings = config['Dev']
+        if devsettings is None:
+            return
+        f = devsettings['LoadFile']
+        self._load_song_details(f)
+
 
     def popup_clip_window(self):
         i = self._selected_bookmark_index()
