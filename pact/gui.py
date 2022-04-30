@@ -135,6 +135,7 @@ class MainWindow:
         self.bookmarks_lst.activate(i)
         self.bookmarks_lst.select_set(i)
         self.reload_bookmark_list()
+        self.bookmarks_lst.see(i)
         self.move_to_bookmark(b)
 
 
