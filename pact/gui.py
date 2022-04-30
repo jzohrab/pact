@@ -448,6 +448,8 @@ class BookmarkWindow(object):
         if e is not None:
             msg = f'Message from Anki/Ankiconnect: {e}'
             messagebox.showerror(title='Anki export failed', message=msg)
+        else:
+            self.ok()
 
 
     def play_pause(self):
