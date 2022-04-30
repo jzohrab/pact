@@ -161,6 +161,7 @@ class MainWindow:
         lst.insert(END, b.display())
         lst.activate(i)
         lst.select_set(i)
+        lst.see(i)
 
 
     def _selected_bookmark_index(self):
