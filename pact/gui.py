@@ -286,6 +286,12 @@ class BookmarkWindow(object):
             variable = self.slider_var)
         self.slider.grid(row=1, column=0, pady=5)
 
+        self.slider_lbl = Label(slider_frame, text='')
+        self.slider_lbl.grid(row=2, column=0, pady=2)
+        def update_slider_label(a, b, c):
+            self.slider_lbl.configure(text=TimeUtils.time_string(self.slider_var.get()))
+        self.slider_var.trace('w', update_slider_label)
+
         ctl_frame = Frame(self.root)
         ctl_frame.grid(row=2, column=0, pady=10)
 
