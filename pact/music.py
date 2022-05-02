@@ -39,6 +39,37 @@ class MusicPlayer:
             return mixer.music.get_pos()
 
 
+    class VlcPlayer:
+        """Play music with vlc."""
+        # ref https://github.com/oaubert/python-vlc/blob/master/examples/tkvlc.py
+
+        def __init__(self):
+            args = []
+            self.instance = vlc.Instance(args)
+            self.player = self.instance.media_player_new()
+
+
+        def load(self, f):
+            m = self.instance.media_new(str(f))  # Path, unicode
+            self.player.set_media(m)
+
+        def play(self, start_ms = 0):
+            self.player.set_time(start_ms)
+            self.player.play()
+
+        def pause(self):
+            self.player.pause() # toggles
+
+        def unpause(self):
+            self.player.pause() # toggles
+
+        def stop(self):
+            self.player.stop()
+
+        def get_pos(self):
+            return self.player.get_time()
+
+
     def __init__(self, slider, state_change_callback = None):
         self.slider = slider
         self.state_change_callback = state_change_callback
