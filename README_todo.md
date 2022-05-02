@@ -3,6 +3,10 @@
 
 ## MVP TODO (usable for me)
 
+* slider doesn't work - eg dev clip
+
+* shift left right moves 1 second at a time
+
 * move full clip load to main window, calc zero bounds and store
 * on bookmark, automatically set clip start and end to nearest zero bounds (if any found and within reasonable range)
 * auto-set transcription if bounds are set
@@ -14,6 +18,7 @@
 * transcribe on thread shouldn't bomb if window closes during
 * on play clip, if transcription is not there, add it.
 * play clip on separate thread
+* add arrow/pointer images next to slider to show where start and end are.
 * Change "Clip mm:ss - mm:ss" to show just the start time, if only that is set (Clip: "06m17.s - ?")
 * If the start time is set after the end, set end to null
 * When "Clip mm:ss - mm:ss" present, on click of time set slider.  then can adjust easily
