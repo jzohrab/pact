@@ -227,7 +227,7 @@ class MainWindow:
 
     def update_play_button_text(self, music_player_state):
         txt = 'Play'
-        if music_player_state is pact.music.MusicPlayer.State.PLAYING:
+        if music_player_state is pact.music.PlayerState.PLAYING:
             txt = 'Pause'
         self.play_btn.configure(text = txt)
 
@@ -464,7 +464,7 @@ class BookmarkWindow(object):
 
     def update_play_button_text(self, music_player_state):
         txt = 'Play'
-        if music_player_state is pact.music.MusicPlayer.State.PLAYING:
+        if music_player_state is pact.music.PlayerState.PLAYING:
             txt = 'Pause'
         self.play_btn.configure(text = txt)
 

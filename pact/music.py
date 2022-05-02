@@ -4,20 +4,21 @@ from enum import Enum
 from pact.utils import TimeUtils
 
 
+class PlayerState(Enum):
+    NEW = 0
+    LOADED = 1
+    PLAYING = 2
+    PAUSED = 3
+
+
 class MusicPlayer:
     """Actually plays music, with slider."""
-
-    class State(Enum):
-        NEW = 0
-        LOADED = 1
-        PLAYING = 2
-        PAUSED = 3
 
     def __init__(self, slider, state_change_callback = None):
         self.slider = slider
         self.state_change_callback = state_change_callback
 
-        self.state = MusicPlayer.State.NEW
+        self.state = PlayerState.NEW
         self.music_file = None
         self.song_length_ms = 0
 
@@ -63,7 +64,7 @@ class MusicPlayer:
         self.start_pos_ms = v
 
         mixer.music.play(loops = 0, start = (v / 1000.0))
-        if self.state is not MusicPlayer.State.PLAYING:
+        if self.state is not PlayerState.PLAYING:
             mixer.music.pause()
         self.update_slider()
 
@@ -80,7 +81,7 @@ class MusicPlayer:
 
         self.slider.set(slider_pos)
 
-        if self.state is MusicPlayer.State.PLAYING:
+        if self.state is PlayerState.PLAYING:
             if slider_pos < self.slider.cget('to'):
                 old_update_id = self.slider_update_id
                 self.slider_update_id = self.slider.after(50, self.update_slider)
@@ -94,26 +95,26 @@ class MusicPlayer:
         self.song_length_ms = sl
         mixer.music.load(f)
         self.start_pos_ms = 0.0
-        self.state = MusicPlayer.State.LOADED
+        self.state = PlayerState.LOADED
 
     def play_pause(self):
         self.cancel_slider_updates()
         if self.music_file is None:
             return
 
-        if self.state is MusicPlayer.State.LOADED:
+        if self.state is PlayerState.LOADED:
             # First play, load and start.
             mixer.music.play(loops = 0, start = (self.start_pos_ms / 1000.0))
-            self.state = MusicPlayer.State.PLAYING
+            self.state = PlayerState.PLAYING
             # self.start_pos_ms = 0
             self.update_slider()
 
-        elif self.state is MusicPlayer.State.PLAYING:
+        elif self.state is PlayerState.PLAYING:
             self._pause()
 
-        elif self.state is MusicPlayer.State.PAUSED:
+        elif self.state is PlayerState.PAUSED:
             mixer.music.unpause()
-            self.state = MusicPlayer.State.PLAYING
+            self.state = PlayerState.PLAYING
             self.update_slider()
 
         else:
@@ -123,10 +124,10 @@ class MusicPlayer:
     def _pause(self):
         mixer.music.pause()
         self.cancel_slider_updates()
-        self.state = MusicPlayer.State.PAUSED
+        self.state = PlayerState.PAUSED
 
     def stop(self):
-        self.state = MusicPlayer.State.LOADED
+        self.state = PlayerState.LOADED
         mixer.music.stop()
         self.cancel_slider_updates()
 
