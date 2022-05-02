@@ -14,9 +14,35 @@ class PlayerState(Enum):
 class MusicPlayer:
     """Actually plays music, with slider."""
 
+    class PygameMixerPlayer:
+        """Play music with pygame mixer."""
+        def __init__(self):
+            pass
+
+        def load(self, f):
+            mixer.music.load(f)
+
+        def play(self, start_ms = 0):
+            mixer.music.play(loops = 0, start = (start_ms / 1000.0))
+
+        def pause(self):
+            mixer.music.pause()
+
+        def unpause(self):
+            mixer.music.unpause()
+
+        def stop(self):
+            mixer.music.stop()
+
+        def get_pos(self):
+            return mixer.music.get_pos()
+
+
     def __init__(self, slider, state_change_callback = None):
         self.slider = slider
         self.state_change_callback = state_change_callback
+
+        self.player = MusicPlayer.PygameMixerPlayer()
 
         self.state = PlayerState.NEW
         self.music_file = None
@@ -62,10 +88,9 @@ class MusicPlayer:
             v = self.song_length_ms
 
         self.start_pos_ms = v
-
-        mixer.music.play(loops = 0, start = (v / 1000.0))
+        self.player.play(v)
         if self.state is not PlayerState.PLAYING:
-            mixer.music.pause()
+            self.player.pause()
         self.update_slider()
 
     def cancel_slider_updates(self):
@@ -73,7 +98,7 @@ class MusicPlayer:
             self.slider.after_cancel(self.slider_update_id)
 
     def update_slider(self):
-        current_pos_ms = mixer.music.get_pos()
+        current_pos_ms = self.player.get_pos()
         slider_pos = self.start_pos_ms + current_pos_ms
         if (current_pos_ms == -1 or slider_pos > self.song_length_ms):
             # Mixer.music goes to -1 when it reaches the end of the file.
@@ -93,7 +118,7 @@ class MusicPlayer:
         self.stop()
         self.music_file = f
         self.song_length_ms = sl
-        mixer.music.load(f)
+        self.player.load(f)
         self.start_pos_ms = 0.0
         self.state = PlayerState.LOADED
 
@@ -104,7 +129,7 @@ class MusicPlayer:
 
         if self.state is PlayerState.LOADED:
             # First play, load and start.
-            mixer.music.play(loops = 0, start = (self.start_pos_ms / 1000.0))
+            self.player.play(self.start_pos_ms)
             self.state = PlayerState.PLAYING
             # self.start_pos_ms = 0
             self.update_slider()
@@ -113,7 +138,7 @@ class MusicPlayer:
             self._pause()
 
         elif self.state is PlayerState.PAUSED:
-            mixer.music.unpause()
+            self.player.unpause()
             self.state = PlayerState.PLAYING
             self.update_slider()
 
@@ -122,13 +147,13 @@ class MusicPlayer:
             raise RuntimeError(f'??? weird state {self.state}?')
 
     def _pause(self):
-        mixer.music.pause()
+        self.player.pause()
         self.cancel_slider_updates()
         self.state = PlayerState.PAUSED
 
     def stop(self):
         self.state = PlayerState.LOADED
-        mixer.music.stop()
+        self.player.stop()
         self.cancel_slider_updates()
 
 
