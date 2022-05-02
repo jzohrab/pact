@@ -93,3 +93,11 @@ Preload an mp3 file during dev, add this to the config.ini:
 [Dev]
 LoadFile = /path/to/file.mp3
 ```
+
+## Unit tests
+
+Are in `/test`.  Run them all with:
+
+```
+python -m unittest discover -s test
+```
