@@ -66,49 +66,48 @@ class MusicPlayer:
             self.is_stopped = True
 
         def load(self, f):
-            print('called load')
             m = self.instance.media_new(str(f))  # Path, unicode
             self.player.set_media(m)
 
         def set_position(self, ms):
-            print(f'called reposition, self.play_pos_ms = {ms}')
+            # print(f'called reposition, self.play_pos_ms = {ms}')
             self.play_pos_ms = ms
 
         def play(self):
-            print('called play')
-            print(f'playing at start = {self.play_pos_ms}')
+            # print('called play')
+            # print(f'playing at start = {self.play_pos_ms}')
             self.player.play()
             self.player.set_time(int(self.play_pos_ms))
             self.is_stopped = False
 
         def pause(self):
-            print('called pause')
+            # print('called pause')
             if not self.player.is_playing():
-                print('already paused')
+                # print('already paused')
                 return
-            print(f'pausing')
+            # print(f'pausing')
             self.player.pause() # toggles
 
         def unpause(self):
-            print('called unpause')
+            # print('called unpause')
             if self.player.is_playing():
-                print('already playing')
+                # print('already playing')
                 return
-            print(f'UN pausing')
+            # print(f'UN pausing')
             self.player.pause() # toggles
 
         def stop(self):
-            print('called stop')
-            print(f'stopping')
+            # print('called stop')
+            # print(f'stopping')
             self.player.stop()
             self.is_stopped = True
 
         def get_pos(self):            
-            print('called get_pos')
+            # print('called get_pos')
             t = self.play_pos_ms
-            print(f'  have t at play_pos_ms = {t}')
+            # print(f'  have t at play_pos_ms = {t}')
             if not self.is_stopped:
-                print('  not stopped')
+                # print('  not stopped')
                 t = self.player.get_time()
                 if t == 0:
                     # Hack: the self.player.get_time() seems to lag a
@@ -116,9 +115,9 @@ class MusicPlayer:
                     # player has started playing from a given
                     # play_pos_ms.  So, return the play position, just
                     # in case.
-                    print(f'  fall back to {self.play_pos_ms}')
+                    # print(f'  fall back to {self.play_pos_ms}')
                     t = self.play_pos_ms
-            print(f'  final get pos = {t}')
+            # print(f'  final get pos = {t}')
             return t
 
 
