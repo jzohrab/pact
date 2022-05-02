@@ -3,8 +3,6 @@
 
 ## MVP TODO (usable for me)
 
-* slider doesn't work - eg dev clip
-
 * shift left right moves 1 second at a time
 
 * move full clip load to main window, calc zero bounds and store
