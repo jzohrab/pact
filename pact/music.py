@@ -1,4 +1,5 @@
 from pygame import mixer
+import vlc
 from enum import Enum
 
 from pact.utils import TimeUtils
