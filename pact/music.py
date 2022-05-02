@@ -1,7 +1,5 @@
-from pygame import mixer
 import vlc
 from enum import Enum
-
 from pact.utils import TimeUtils
 
 
@@ -13,120 +11,91 @@ class PlayerState(Enum):
     STOPPED = 4
 
 
+class VlcPlayer:
+    """Simple wrapper/adaptor around VLC player so it can be used by the
+    MusicPlayer class below.  ref
+    https://github.com/oaubert/python-vlc/blob/master/examples/tkvlc.py
+    """
+
+    def __init__(self):
+        args = []
+        self.instance = vlc.Instance(args)
+        self.player = self.instance.media_player_new()
+        self.play_pos_ms = 0
+        self.is_stopped = True
+
+
+    def load(self, f):
+        m = self.instance.media_new(str(f))  # Path, unicode
+        self.player.set_media(m)
+
+
+    def set_position(self, ms):
+        # print(f'called reposition, self.play_pos_ms = {ms}')
+        self.play_pos_ms = ms
+
+
+    def play(self):
+        # print('called play')
+        # print(f'playing at start = {self.play_pos_ms}')
+        self.player.play()
+        self.player.set_time(int(self.play_pos_ms))
+        self.is_stopped = False
+
+
+    def pause(self):
+        # print('called pause')
+        if not self.player.is_playing():
+            # print('already paused')
+            return
+        # print(f'pausing')
+        self.player.pause() # toggles
+
+
+    def unpause(self):
+        # print('called unpause')
+        if self.player.is_playing():
+            # print('already playing')
+            return
+        # print(f'UN pausing')
+        self.player.pause() # toggles
+
+
+    def stop(self):
+        # print('called stop')
+        # print(f'stopping')
+        self.player.stop()
+        self.is_stopped = True
+
+
+    def get_pos(self):
+        # print('called get_pos')
+        t = self.play_pos_ms
+        # print(f'  have t at play_pos_ms = {t}')
+        if not self.is_stopped:
+            # print('  not stopped')
+            t = self.player.get_time()
+            if t == 0:
+                # Hack: the self.player.get_time() seems to lag a
+                # bit, and returns 0 for a few cycles after the
+                # player has started playing from a given
+                # play_pos_ms.  So, return the play position, just
+                # in case.
+                # print(f'  fall back to {self.play_pos_ms}')
+                t = self.play_pos_ms
+        # print(f'  final get pos = {t}')
+        return t
+
+
 class MusicPlayer:
     """Actually plays music, with slider."""
-
-    class PygameMixerPlayer:
-        """Play music with pygame mixer."""
-        def __init__(self):
-            self.play_pos_ms = 0
-            self.is_stopped = True
-
-        def load(self, f):
-            mixer.music.load(f)
-
-        def set_position(self, ms):
-            self.play_pos_ms = ms
-
-        def play(self):
-            play_s = self.play_pos_ms / 1000.0
-            mixer.music.play(loops = 0, start = play_s)
-            self.is_stopped = False
-
-        def pause(self):
-            mixer.music.pause()
-
-        def unpause(self):
-            mixer.music.unpause()
-
-        def stop(self):            
-            mixer.music.stop()
-            self.is_stopped = True
-
-        def get_pos(self):
-            """Pygame mp3 player position is the sum of where it started
-            playing plus its current pos. ref
-            https://www.pygame.org/docs/ref/music.html
-            """
-            if self.is_stopped:
-                return self.play_pos_ms
-            else:
-                return self.play_pos_ms + mixer.music.get_pos()
-
-
-    class VlcPlayer:
-        """Play music with vlc."""
-        # ref https://github.com/oaubert/python-vlc/blob/master/examples/tkvlc.py
-
-        def __init__(self):
-            args = []
-            self.instance = vlc.Instance(args)
-            self.player = self.instance.media_player_new()
-            self.play_pos_ms = 0
-            self.is_stopped = True
-
-        def load(self, f):
-            m = self.instance.media_new(str(f))  # Path, unicode
-            self.player.set_media(m)
-
-        def set_position(self, ms):
-            # print(f'called reposition, self.play_pos_ms = {ms}')
-            self.play_pos_ms = ms
-
-        def play(self):
-            # print('called play')
-            # print(f'playing at start = {self.play_pos_ms}')
-            self.player.play()
-            self.player.set_time(int(self.play_pos_ms))
-            self.is_stopped = False
-
-        def pause(self):
-            # print('called pause')
-            if not self.player.is_playing():
-                # print('already paused')
-                return
-            # print(f'pausing')
-            self.player.pause() # toggles
-
-        def unpause(self):
-            # print('called unpause')
-            if self.player.is_playing():
-                # print('already playing')
-                return
-            # print(f'UN pausing')
-            self.player.pause() # toggles
-
-        def stop(self):
-            # print('called stop')
-            # print(f'stopping')
-            self.player.stop()
-            self.is_stopped = True
-
-        def get_pos(self):            
-            # print('called get_pos')
-            t = self.play_pos_ms
-            # print(f'  have t at play_pos_ms = {t}')
-            if not self.is_stopped:
-                # print('  not stopped')
-                t = self.player.get_time()
-                if t == 0:
-                    # Hack: the self.player.get_time() seems to lag a
-                    # bit, and returns 0 for a few cycles after the
-                    # player has started playing from a given
-                    # play_pos_ms.  So, return the play position, just
-                    # in case.
-                    # print(f'  fall back to {self.play_pos_ms}')
-                    t = self.play_pos_ms
-            # print(f'  final get pos = {t}')
-            return t
-
 
     def __init__(self, slider, state_change_callback = None):
         self.slider = slider
         self.state_change_callback = state_change_callback
 
         # self.player = MusicPlayer.PygameMixerPlayer()
-        self.player = MusicPlayer.VlcPlayer()
+        self.player = VlcPlayer()
 
         self.state = PlayerState.NEW
         self.music_file = None
