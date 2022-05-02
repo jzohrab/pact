@@ -10,7 +10,7 @@ class TimeUtils:
 
     @staticmethod
     def time_string(ms):
-        total_seconds = ms / 1000.0
+        total_seconds = round(ms / 1000.0, 1)
         mins = int(total_seconds) // 60
         secs = total_seconds % 60
         return '{:02d}:{:04.1f}'.format(mins, secs)
