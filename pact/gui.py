@@ -23,6 +23,59 @@ import pact.music
 from pact.utils import TimeUtils, anki_card_export
 
 
+class SliderMarkersWidget:
+
+    @staticmethod
+    def coordinates_for_value(val, minval, maxval, length, coords):
+
+        def chunks(l, n):
+            n = max(1, n)
+            return (l[i:i+n] for i in range(0, len(l), n))
+        coordpairs = list(chunks(coords, 2))
+        xcoords = [el[0] for el in coordpairs]
+
+        width = max(xcoords) - min(xcoords)
+        middle = width / 2.0
+        shiftleft = min(xcoords) + middle
+
+
+        # shift everything so that the middle is at zero
+        middleatzero = [(c[0] - shiftleft, c[1]) for c in coordpairs]
+
+        # Where there middle is actually supposed to go.
+        placement = int(length * (val - minval) / (maxval - minval))
+
+        # Shift the middle so that it's at placement
+        final = [(c[0] + placement, c[1]) for c in middleatzero]
+
+        # print(xcoords)
+        # print(f'shifting by shiftleft = {shiftleft}')
+        # print(f'shifted = {middleatzero}')
+        # print(f'final = {final}')
+
+        # This python flattening is mental.
+        flattened = [item for sublist in final for item in sublist]
+        return tuple(flattened)
+
+    def __init__(self, canvas, width, minvalue, maxvalue):
+        self.canvas = canvas
+        self.width = width
+        self.polygons = []
+        self.minvalue = minvalue
+        self.maxvalue = maxvalue
+
+    def add_marker(self, value, polygon_coords, fill = "red"):
+        adjusted_coords = SliderMarkersWidget.coordinates_for_value(
+            value, self.minvalue, self.maxvalue, self.width, polygon_coords)
+        p = self.canvas.create_polygon(adjusted_coords, fill=fill)
+        self.polygons.append(p)
+
+    def clear(self):
+        for p in self.polygons:
+            self.canvas.delete(p)
+        self.polygons = []
+
+
 class MainWindow:
 
     class FullTrackBookmark(pact.music.Bookmark):
@@ -279,15 +332,22 @@ class BookmarkWindow(object):
         # out how to calculate it exactly using the matplotlib figure
         # dimensions.
         length_eyeballed = 7 * 55
+
+        # Slider markers indicating clip start/end.
+        c = Canvas(slider_frame, width=length_eyeballed, height = 10)
+        c.grid(row = 1, column = 0, pady=0)
+        self.clip_markers = SliderMarkersWidget(c, length_eyeballed, self.from_val, self.to_val)
+        self.clip_markers.add_marker(self.bookmark.position_ms, (0, 0, 10, 0, 5, 10), "blue")
+
         self.slider = Scale(
             slider_frame, orient = HORIZONTAL,
             length = length_eyeballed, sliderlength = 10,
             from_ = self.from_val, to = self.to_val, showvalue = 0,
             variable = self.slider_var)
-        self.slider.grid(row=1, column=0, pady=5)
+        self.slider.grid(row=2, column=0, pady=5)
 
         self.slider_lbl = Label(slider_frame, text='')
-        self.slider_lbl.grid(row=2, column=0, pady=2)
+        self.slider_lbl.grid(row=3, column=0, pady=2)
         def update_slider_label(a, b, c):
             self.slider_lbl.configure(text=TimeUtils.time_string(self.slider_var.get()))
         self.slider_var.trace('w', update_slider_label)
@@ -319,9 +379,12 @@ class BookmarkWindow(object):
             e = self.end_var.get()
             text = TimeUtils.interval_string(s, e, 'n/a')
             clip_interval_lbl.configure(text = f'Clip: {text}')
+            self.set_clip_bounds_markers()
+
         self.start_var.trace('w', lambda a,b,c: update_clip_interval_lbl())
         self.end_var.trace('w', lambda a,b,c: update_clip_interval_lbl())
         update_clip_interval_lbl()
+        self.set_clip_bounds_markers()
 
         self.transcription_textbox = Text(
             clip_details_frame,
@@ -370,6 +433,19 @@ class BookmarkWindow(object):
         self.root.wait_visibility()
         self.root.grab_set()
         self.root.transient(parent)
+
+
+    def set_clip_bounds_markers(self):
+        def set_marker(var, fill="red"):
+            arrow_poly_coords = (0, 0, 10, 0, 5, 10)
+            self.clip_markers.add_marker(var, arrow_poly_coords, fill)
+
+        self.clip_markers.clear()
+        s = self.start_var.get()
+        e = self.end_var.get()
+        set_marker(s)
+        if e > s:
+            set_marker(e)
 
 
     def get_slider_from_to(self, bk):
