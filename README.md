@@ -41,8 +41,11 @@ deactivate
 ### Main window
 
 * `<Command-p>'`: Play/pause
-* `<Right>`: Advance slider 100ms
-* `<Left>`: Move slider back 100ms
+
+* `<Right>`: Advance slider 100 ms
+* `<Left>`: Move slider back 100 ms
+* `<Command-Right>`: Advance slider 1000 ms
+* `<Command-Left>`: Move slider back 1000 ms
 
 * `<m>`: Add bookmark
 * `<u>`: Update selected bookmark to slider position
@@ -55,9 +58,12 @@ deactivate
 ### Clip editor popup
 
 * `<Command-p>`: Play/pause clip
-* `<Right>`: Advance slider 100ms
-* `<Left>`: Move slider back 100ms
 * `<Command-r>`: Reset the slider to 0
+
+* `<Right>`: Advance slider 100 ms
+* `<Left>`: Move slider back 100 ms
+* `<Command-Right>`: Advance slider 1000 ms
+* `<Command-Left>`: Move slider back 1000 ms
 
 * `<Command-s>`: Set the clip start
 * `<Command-e>`: Set the clip end

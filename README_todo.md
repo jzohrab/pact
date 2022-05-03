@@ -3,8 +3,6 @@
 
 ## MVP TODO (usable for me)
 
-* shift left right moves 1 second at a time
-
 * move full clip load to main window, calc zero bounds and store
 * on bookmark, automatically set clip start and end to nearest zero bounds (if any found and within reasonable range)
 * auto-set transcription if bounds are set
