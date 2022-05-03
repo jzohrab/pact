@@ -450,9 +450,17 @@ class BookmarkWindow(object):
             height = 5, width = 60, wrap=WORD, borderwidth=1) # relief='solid'
         if (self.bookmark.transcription):
             self.transcription_textbox.insert(1.0, self.bookmark.transcription)
-
         clip_interval_lbl.grid(row=0, column=1, pady=2, sticky = W)
         self.transcription_textbox.grid(row=1, column = 1)
+
+        self.transcription_progress = ttk.Progressbar(
+            clip_details_frame,
+            orient='horizontal',
+            mode='determinate',
+            length=280
+        )
+        self.transcription_progress['value'] = 0
+        self.transcription_progress.grid(row=2, column = 1)
 
         exit_frame = Frame(self.root)
         exit_frame.grid(row=5, column=0, pady=20)
@@ -544,6 +552,16 @@ class BookmarkWindow(object):
         c = self.get_clip()
         if c is None:
             return
+
+        txt = self.transcription_textbox.get(1.0, END)
+        if txt is None:  # Safeguard
+            txt = ''
+        txt = txt.replace("\n", '')
+        if txt == '':
+            print('transcribing')
+            self.transcribe()
+        else:
+            print('Not transcribing')
         playback.play(c)
 
 
@@ -554,7 +572,7 @@ class BookmarkWindow(object):
 
         self.stop_current_transcription()
         def do_transcription():
-            cb = pact.voskutils.TextCallback(self.parent, self.transcription_textbox)
+            cb = pact.voskutils.TextCallback(self.parent, self.transcription_textbox, self.transcription_progress)
             self.transcription_callback = cb
             pact.voskutils.transcribe_audiosegment(c, cb)
         self.transcription_thread = StoppableThread(target=do_transcription)
@@ -586,7 +604,11 @@ class BookmarkWindow(object):
 
     def save_clip(self):
         self.bookmark.position_ms = float(self.entry_var.get())
-        self.bookmark.transcription = self.transcription_textbox.get(1.0, END)
+        txt = self.transcription_textbox.get(1.0, END)
+        if txt is not None and txt != '':
+            self.bookmark.transcription = txt
+        else:
+            self.bookmark.transcription = None
         self.set_clip_bounds()
 
 

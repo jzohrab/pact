@@ -3,14 +3,10 @@
 
 ## MVP TODO (usable for me)
 
-* transcribe on separate thread
-* show transcription progress on screen (determinate progress bar)
-* transcribe on thread shouldn't bomb if window closes during
-* strip carriage returns in the json export of the transcription (from textbox)
+* on play clip, if transcription is not there, add it.
 
 * play clip using the regular player, so can stop it if you want, and see updates.
 * optionally, play clip on separate thread
-* on play clip, if transcription is not there, add it.
 
 * need some kind of status update on export, "success" or similar.
 * if exporting on thread, then gui update shouldn't cause seg fault.

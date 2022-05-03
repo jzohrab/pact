@@ -70,7 +70,7 @@ class ConsoleCallback(TranscriptionCallback):
 
 class TextCallback(TranscriptionCallback):
 
-    def __init__(self, rootwindow, textbox):
+    def __init__(self, rootwindow, textbox, progress_bar = None):
         super()
         self._totalbytes = 100
         self._bytesread = 0
@@ -85,6 +85,7 @@ class TextCallback(TranscriptionCallback):
         self.sentences = []
 
         self.transcription_textbox = textbox
+        self.progress = progress_bar
 
         # Handle to main window to force updates.
         # Hacky, really this should be moved to a thread or subprocess.
@@ -103,6 +104,8 @@ class TextCallback(TranscriptionCallback):
         if self._pct - self._last_pct >= 10:
             self.alert_update()
             self._last_pct = self._pct
+        if self.progress and not self.should_be_stopped:
+            self.progress['value'] = self._pct
 
     def transcription(self):
         tmp = self.sentences.copy()
@@ -111,6 +114,10 @@ class TextCallback(TranscriptionCallback):
         return '. '.join(self.sentences)
 
     def alert_update(self):
+        if self.should_be_stopped:
+            print('stopped, no update')
+            return
+
         print()
         print(f'{self._pct}%: {self.transcription()}')
 
