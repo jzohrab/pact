@@ -184,9 +184,16 @@ class MainWindow:
             return
         print('Doing dev configuration')
         devsettings = config['Dev']
-        f = devsettings['LoadFile']
-        self._load_song_details(f)
 
+        f = devsettings.get('SessionFile', None)
+        if f:
+            self._load_state_file(f)
+            return
+
+        f = devsettings.get('LoadFile', None)
+        if f:
+            self._load_song_details(f)
+            return
 
     def popup_clip_window(self):
         i = self._selected_bookmark_index()
@@ -333,10 +340,13 @@ class MainWindow:
     def load_app_state(self):
         """Load previously pickled state."""
         f = filedialog.askopenfilename(filetypes = (("Clips file", "*.clips"),))
+        self._load_state_file(self, f)
+
+
+    def _load_state_file(self, f):
         if f is None or f == '':
             print("Cancelled")
             return
-
         appstate = None
         with open(f, "rb") as src:
             appstate = pickle.load(src)
