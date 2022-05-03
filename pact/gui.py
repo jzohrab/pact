@@ -89,9 +89,16 @@ class MainWindow:
         window.title('MP3 Player')
         window.geometry('600x400')
         self.window = window
-
         self.music_file = None
         self.song_length_ms = 0
+
+        menubar = Menu(self.window)
+        self.window['menu'] = menubar
+        menu_file = Menu(menubar)
+        menubar.add_cascade(menu=menu_file, label='File')
+        menu_file.add_command(label='Open mp3', command=self.load)
+        menu_file.add_separator()
+        menu_file.add_command(label='Close', command=self.quit)
 
         # Layout
         master_frame = Frame(window)
