@@ -130,11 +130,10 @@ class MainWindow:
             b.grid(row=0, column=column, padx=5)
             return b
 
-        _make_button('Load', 1, self.load)
-        self.play_btn = _make_button('Play', 2, self.play_pause)
-        _make_button('Bookmark', 3, self.add_bookmark)
-        _make_button('Delete', 4, self.delete_selected_bookmark)
-        _make_button('Clip', 5, self.popup_clip_window)
+        self.play_btn = _make_button('Play', 1, self.play_pause)
+        _make_button('Bookmark', 2, self.add_bookmark)
+        _make_button('Delete', 3, self.delete_selected_bookmark)
+        _make_button('Clip', 4, self.popup_clip_window)
 
         slider_frame = Frame(master_frame)
         slider_frame.grid(row=0, column=0, pady=5)
