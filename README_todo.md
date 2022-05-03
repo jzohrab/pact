@@ -3,30 +3,32 @@
 
 ## MVP TODO (usable for me)
 
-* move full clip load to main window, calc zero bounds and store
-* on bookmark, automatically set clip start and end to nearest zero bounds (if any found and within reasonable range)
-* auto-set transcription if bounds are set
-
-* config file config.ini required at startup
-* strip carriage returns in the json export of the transcription (from textbox)
-* play clip using the regular player, so can stop it if you want, and see updates.
 * transcribe on separate thread
+* show transcription progress on screen (determinate progress bar)
 * transcribe on thread shouldn't bomb if window closes during
+* strip carriage returns in the json export of the transcription (from textbox)
+
+* play clip using the regular player, so can stop it if you want, and see updates.
+* optionally, play clip on separate thread
 * on play clip, if transcription is not there, add it.
-* play clip on separate thread
-* Change "Clip mm:ss - mm:ss" to show just the start time, if only that is set (Clip: "06m17.s - ?")
-* If the start time is set after the end, set end to null
-* When "Clip mm:ss - mm:ss" present, on click of time set slider.  then can adjust easily
-* clicking "transcribe" re-transcribes existing
+
 * need some kind of status update on export, "success" or similar.
 * if exporting on thread, then gui update shouldn't cause seg fault.
 * save the exported date with the clip
 * if already exported, ask if want to re-export
-* say "are you sure?" message if clip has been defined and transcribed
-* add "export all" button on main form?
+
+* move full clip load to main window, calc zero bounds and store
+* on bookmark, automatically set clip start and end to nearest zero bounds (if any found and within reasonable range)
+* auto-set transcription if bounds are set
+
 * change title.
-* load button to menu
-* remove all other menu things
+* config file config.ini required at startup
+
+* Change "Clip mm:ss - mm:ss" to show just the start time, if only that is set (Clip: "06m17.s - ?")
+* If the start time is set after the end, set end to null
+* When "Clip mm:ss - mm:ss" present, user can click on time to move slider to it.  simplifies adjustments.
+
+* add "export all" button on main form?
 * fresh checkout, install, build from scratch in new venv
 * final README updates
 
