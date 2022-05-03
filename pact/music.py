@@ -148,6 +148,10 @@ class MusicPlayer:
         if self.slider_update_id:
             self.slider.after_cancel(self.slider_update_id)
 
+    def get_pos(self):
+        """For serialization."""
+        return self.player.get_pos()
+
     def update_slider(self):
         slider_pos = self.player.get_pos()
         if (slider_pos > self.song_length_ms):

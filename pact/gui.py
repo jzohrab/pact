@@ -5,6 +5,7 @@ import json
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+import pickle
 import tkinter.ttk as ttk
 import wave
 
@@ -98,6 +99,9 @@ class MainWindow:
         menubar.add_cascade(menu=menu_file, label='File')
         menu_file.add_command(label='Open mp3', command=self.load)
         menu_file.add_separator()
+        menu_file.add_command(label='Save current session', command=self.save_app_state)
+        menu_file.add_command(label='Reload session', command=self.load_app_state)
+        menu_file.add_separator()
         menu_file.add_command(label='Close', command=self.quit)
 
         # Layout
@@ -176,9 +180,10 @@ class MainWindow:
     def init_dev(self):
         config = configparser.ConfigParser()
         config.read('config.ini')
-        devsettings = config['Dev']
-        if devsettings is None:
+        if not config.has_section('Dev'):
             return
+        print('Doing dev configuration')
+        devsettings = config['Dev']
         f = devsettings['LoadFile']
         self._load_song_details(f)
 
@@ -297,6 +302,48 @@ class MainWindow:
         self.music_player.stop()
         self.window.destroy()
 
+
+    class ApplicationState:
+        def __init__(self):
+            pass
+
+        @staticmethod
+        def from_app(mainwindow):
+            s = MainWindow.ApplicationState()
+            s.music_file = mainwindow.music_file
+            s.music_player_pos = mainwindow.music_player.get_pos()
+            s.bookmarks = mainwindow.bookmarks
+            return s
+
+
+    def save_app_state(self):
+        """Pickle app state for later reload."""
+        suggested = os.path.basename(self.music_file)
+        fname, ext = os.path.splitext(suggested)
+        f = filedialog.asksaveasfilename(initialfile = f'{fname}.clips', filetypes = (("Clips file", "*.clips"),))
+        if f is None or f ==  '':
+            print("Cancelled")
+            return
+
+        appstate = MainWindow.ApplicationState.from_app(self)
+        with open(f, "wb") as dest:
+            pickle.dump(appstate, dest, protocol=0)
+
+
+    def load_app_state(self):
+        """Load previously pickled state."""
+        f = filedialog.askopenfilename(filetypes = (("Clips file", "*.clips"),))
+        if f is None or f == '':
+            print("Cancelled")
+            return
+
+        appstate = None
+        with open(f, "rb") as src:
+            appstate = pickle.load(src)
+        self._load_song_details(appstate.music_file)
+        self.music_player.reposition(appstate.music_player_pos)
+        self.bookmarks = appstate.bookmarks
+        self.reload_bookmark_list()
 
 
 class BookmarkWindow(object):

@@ -30,10 +30,10 @@
 * fresh checkout, install, build from scratch in new venv
 * final README updates
 
+* session reload fails if mp3 file has moved ... should it? maybe add menu "reload session with current file"
 
 ## After MVP, possible pre-release
 
-* save and import to load all bookmarks, current position
 * fix TODOs in README.md
 * packaging?
 
