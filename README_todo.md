@@ -3,11 +3,6 @@
 
 ## MVP TODO (usable for me)
 
-* on play clip, if transcription is not there, add it.
-
-* play clip using the regular player, so can stop it if you want, and see updates.
-* optionally, play clip on separate thread
-
 * need some kind of status update on export, "success" or similar.
 * if exporting on thread, then gui update shouldn't cause seg fault.
 * save the exported date with the clip

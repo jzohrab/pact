@@ -13,7 +13,7 @@ from matplotlib import pyplot
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from mutagen.mp3 import MP3
-from pydub import AudioSegment, playback
+from pydub import AudioSegment
 from tempfile import NamedTemporaryFile
 from tkinter import *
 from tkinter import filedialog
@@ -548,19 +548,27 @@ class BookmarkWindow(object):
         return (sl_min, sl_max)
 
 
-    def get_clip(self):
+    def get_clip_bounds(self):
         cs = self.start_var.get()
         ce = self.end_var.get()
         if cs >= ce:
             return None
+        return (cs, ce)
+
+
+    def get_clip(self):
+        bounds = self.get_clip_bounds()
+        if not bounds:
+            return None
 
         sound = BookmarkWindow.getFullAudioSegment(self.music_file)
-        return sound[cs : ce]
+        return sound[bounds[0] : bounds[1]]
         
 
     def play_clip(self):
-        c = self.get_clip()
-        if c is None:
+        bounds = self.get_clip_bounds()
+        if not bounds:
+            print('No clip bounds, not playing.')
             return
 
         txt = self.transcription_textbox.get(1.0, END)
@@ -572,7 +580,10 @@ class BookmarkWindow(object):
             self.transcribe()
         else:
             print('Not transcribing')
-        playback.play(c)
+
+        self.music_player.reposition(bounds[0])
+        self.music_player.stop_at_ms = bounds[1]
+        self.music_player.play()
 
 
     def transcribe(self):

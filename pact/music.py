@@ -92,14 +92,17 @@ class MusicPlayer:
 
     def __init__(self, slider, state_change_callback = None):
         self.slider = slider
+        self.slider_max = self.slider.cget('to')
         self.state_change_callback = state_change_callback
 
-        # self.player = MusicPlayer.PygameMixerPlayer()
         self.player = VlcPlayer()
 
         self.state = PlayerState.NEW
         self.music_file = None
         self.song_length_ms = 0
+
+        # Allow "early stop".  If set, only play to this position.
+        self.stop_at_ms = None
 
         self.slider_update_id = None
 
@@ -136,6 +139,9 @@ class MusicPlayer:
         elif (v > self.song_length_ms):
             v = self.song_length_ms
 
+        # No longer stopping at specified place.
+        self.stop_at_ms = None
+
         curr_state = self.state
         self.player.stop()
         self.state = PlayerState.STOPPED
@@ -160,12 +166,14 @@ class MusicPlayer:
         self.slider.set(slider_pos)
 
         if self.state is PlayerState.PLAYING:
-            if slider_pos < self.slider.cget('to'):
-                old_update_id = self.slider_update_id
-                self.slider_update_id = self.slider.after(50, self.update_slider)
-            else:
-                # Reached the end of the slider, stop updating.
+            end_pos = self.slider_max
+            if self.stop_at_ms is not None:
+                end_pos = self.stop_at_ms
+            if slider_pos >= end_pos:
+                self.stop_at_ms = None
                 self._pause()
+            else:
+                self.slider_update_id = self.slider.after(50, self.update_slider)
 
     def load_song(self, f, sl):
         self.stop()
@@ -174,16 +182,21 @@ class MusicPlayer:
         self.player.load(f)
         self.state = PlayerState.LOADED
 
+    def play(self):
+        self.cancel_slider_updates()
+        if self.music_file is None:
+            return
+        self.player.play()
+        self.state = PlayerState.PLAYING
+        self.update_slider()
+
     def play_pause(self):
         self.cancel_slider_updates()
         if self.music_file is None:
             return
 
         if self.state is PlayerState.LOADED or self.state is PlayerState.STOPPED:
-            # First play, load and start.
-            self.player.play()
-            self.state = PlayerState.PLAYING
-            self.update_slider()
+            self.play()
 
         elif self.state is PlayerState.PLAYING:
             self._pause()
