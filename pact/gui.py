@@ -21,7 +21,7 @@ from tkinter import messagebox
 
 import pact.voskutils
 import pact.music
-from pact.utils import TimeUtils, anki_card_export
+from pact.utils import TimeUtils, anki_card_export, StoppableThread
 
 
 class SliderMarkersWidget:
@@ -364,6 +364,10 @@ class BookmarkWindow(object):
         # Pre-calc graphing data.  If from_val or to_val change, must recalc.
         self.signal_plot_data = self.get_signal_plot_data(self.from_val, self.to_val)
 
+        # Transcription happens on a thread and can be stopped.
+        self.transcription_thread = None
+        self.transcription_callback = None
+
         # Start the clip at the bookmark value for now, good enough.
         clip_bounds = bookmark.clip_bounds_ms
         if not bookmark.clip_bounds_ms:
@@ -547,8 +551,21 @@ class BookmarkWindow(object):
         c = self.get_clip()
         if c is None:
             return
-        cb = pact.voskutils.TextCallback(self.parent, self.transcription_textbox)
-        pact.voskutils.transcribe_audiosegment(c, cb)
+
+        self.stop_current_transcription()
+        def do_transcription():
+            cb = pact.voskutils.TextCallback(self.parent, self.transcription_textbox)
+            self.transcription_callback = cb
+            pact.voskutils.transcribe_audiosegment(c, cb)
+        self.transcription_thread = StoppableThread(target=do_transcription)
+        self.transcription_thread.start()
+
+
+    def stop_current_transcription(self):
+        if not self.transcription_thread:
+            return
+        self.transcription_callback.stop()
+        self.transcription_thread.stop()
 
 
     def set_clip_bounds(self):
@@ -603,6 +620,7 @@ class BookmarkWindow(object):
 
 
     def ok(self):
+        self.stop_current_transcription()
         self.save_clip()
         self.root.grab_release()
         self.root.destroy()

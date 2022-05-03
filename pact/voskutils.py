@@ -19,6 +19,7 @@ class TranscriptionCallback(object):
     def partial_result(self, r): pass
     def result(self, r): pass
     def final_result(self, r): pass
+    def should_stop(self): pass
     
 
 class ConsoleCallback(TranscriptionCallback):
@@ -63,6 +64,9 @@ class ConsoleCallback(TranscriptionCallback):
         self.latest_result = t.get('text')
         self.alert_update()
 
+    def should_stop(self):
+        return False
+
 
 class TextCallback(TranscriptionCallback):
 
@@ -85,6 +89,8 @@ class TextCallback(TranscriptionCallback):
         # Handle to main window to force updates.
         # Hacky, really this should be moved to a thread or subprocess.
         self.rootwindow = rootwindow
+
+        self.should_be_stopped = False
 
     def totalbytes(self, t):
         print(f'About to read {t}')
@@ -129,6 +135,13 @@ class TextCallback(TranscriptionCallback):
         print()
         print('done')
 
+    def stop(self):
+        self.should_be_stopped = True
+
+    def should_stop(self):
+        return self.should_be_stopped
+
+
 
 def transcribe_wav(f, callback):
     """Transcrabe a .wav file, calling back to provide updates.
@@ -158,7 +171,7 @@ def transcribe_wav(f, callback):
     callback.totalbytes(totalbytes)
 
     end_of_stream = False
-    while not end_of_stream:
+    while not end_of_stream and not callback.should_stop():
         data = wf.readframes(4000)
         callback.bytesread(len(data))
 
@@ -170,7 +183,8 @@ def transcribe_wav(f, callback):
             callback.partial_result(rec.PartialResult())
     wf.close()
 
-    callback.final_result(rec.FinalResult())
+    if not callback.should_stop():
+        callback.final_result(rec.FinalResult())
 
 
 def transcribe_audiosegment(chunk, cb = TranscriptionCallback()):
