@@ -171,7 +171,7 @@ class MusicPlayer:
                 end_pos = self.stop_at_ms
             if slider_pos >= end_pos:
                 self.stop_at_ms = None
-                self._pause()
+                self.pause()
             else:
                 self.slider_update_id = self.slider.after(50, self.update_slider)
 
@@ -180,6 +180,7 @@ class MusicPlayer:
         self.music_file = f
         self.song_length_ms = sl
         self.player.load(f)
+        self.slider_max = sl
         self.state = PlayerState.LOADED
 
     def play(self):
@@ -199,7 +200,7 @@ class MusicPlayer:
             self.play()
 
         elif self.state is PlayerState.PLAYING:
-            self._pause()
+            self.pause()
 
         elif self.state is PlayerState.PAUSED:
             self.player.unpause()
@@ -210,7 +211,7 @@ class MusicPlayer:
             # Should never get here, but in case I missed something ...
             raise RuntimeError(f'??? weird state {self.state}?')
 
-    def _pause(self):
+    def pause(self):
         if self.state is not PlayerState.PLAYING:
             return
         self.player.pause()

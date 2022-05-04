@@ -201,6 +201,7 @@ class MainWindow:
             return
         b = self.bookmarks[i]
 
+        self.music_player.pause()
         d = BookmarkWindow(self.window, b, self.music_file, self.song_length_ms)
         self.window.wait_window(d.root)
         d.root.grab_release()
@@ -485,7 +486,7 @@ class BookmarkWindow(object):
 
 
         self.music_player = pact.music.MusicPlayer(self.slider, self.update_play_button_text)
-        self.music_player.load_song(music_file, song_length_ms)
+        self.music_player.load_song(music_file, self.to_val)
         self.music_player.reposition(clip_bounds[0])
         # print(f'VALS: from={from_val}, to={to_val}, val={bookmark.position_ms}')
 
@@ -663,6 +664,7 @@ class BookmarkWindow(object):
 
 
     def ok(self):
+        self.music_player.stop()
         self.stop_current_transcription()
         self.save_clip()
         self.root.grab_release()
