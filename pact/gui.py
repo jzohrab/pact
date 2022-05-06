@@ -21,7 +21,7 @@ from tkinter import messagebox
 
 import pact.voskutils
 import pact.music
-from pact.utils import TimeUtils, anki_card_export, StoppableThread
+from pact.utils import TimeUtils, anki_card_export, StoppableThread, audiosegment_from_mp3_time_range
 import pact.textmatch
 
 
@@ -578,9 +578,7 @@ class BookmarkWindow(object):
         bounds = self.get_clip_bounds()
         if not bounds:
             return None
-
-        sound = BookmarkWindow.getFullAudioSegment(self.music_file)
-        return sound[bounds[0] : bounds[1]]
+        return audiosegment_from_mp3_time_range(self.music_file, bounds[0], bounds[1])
         
 
     def play_clip(self):
@@ -722,25 +720,8 @@ class BookmarkWindow(object):
         self.root.destroy()
 
 
-    _full_audio_segment = None
-    _old_music_file = None
-
-
-    @classmethod
-    def getFullAudioSegment(cls, f):
-        # Store the full segment, b/c it takes a while to make.
-        if (BookmarkWindow._old_music_file != f or BookmarkWindow._full_audio_segment is None):
-            print('loading full segment ...')
-            BookmarkWindow._full_audio_segment = AudioSegment.from_mp3(f)
-            BookmarkWindow._old_music_file = f
-        else:
-            print('using cached segment')
-        return BookmarkWindow._full_audio_segment
-            
-
     def get_signal_plot_data(self, from_val, to_val):
-        sound = BookmarkWindow.getFullAudioSegment(self.music_file)
-        sound = sound[from_val : to_val]
+        sound = audiosegment_from_mp3_time_range(self.music_file, from_val, to_val)
         sound = sound.set_channels(1)
 
         # Hack for plotting: export to a .wav file.  I can't

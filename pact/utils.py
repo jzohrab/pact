@@ -4,6 +4,8 @@ import configparser
 import os
 import requests
 import shutil
+import ffmpeg
+import pydub
 import threading
 
 
@@ -38,6 +40,32 @@ class StoppableThread(threading.Thread):
 
     def stopped(self):
         return self._stop_event.is_set()
+
+
+def audiosegment_from_mp3_time_range(path_to_mp3, starttime_ms, endtime_ms):
+    """Make an audio clip from mp3 _very quickly_ using ffmpeg-python."""
+    # ref https://github.com/jiaaro/pydub/issues/135
+
+    duration_ms = endtime_ms - starttime_ms
+    seg = None
+    with NamedTemporaryFile("w+b", suffix=".mp3") as f:
+        ffmpeg_cmd = (
+            ffmpeg
+            .input(path_to_mp3, ss = (starttime_ms/1000.0), t = (duration_ms/1000.0))
+
+            # vsync vfr added per https://stackoverflow.com/questions/18064604/
+            #   frame-rate-very-high-for-a-muxer-not-efficiently-supporting-it
+            # loglevel added to quiet down ffmpeg console output.
+            .output(f.name, acodec='copy', **{'vsync':'vfr', 'loglevel':'error'})
+            .overwrite_output()
+        )
+        # print('args:')
+        # print(ffmpeg_cmd.get_args())
+        ffmpeg_cmd.run()
+
+        seg = pydub.AudioSegment.from_mp3(f.name)
+
+    return seg
 
 
 def anki_card_export(audiosegment, transcription = None):

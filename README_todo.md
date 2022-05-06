@@ -8,8 +8,7 @@
 * save the exported date with the clip
 * if already exported, ask if want to re-export
 
-* move full clip load to main window, calc zero bounds and store
-* on bookmark, automatically set clip start and end to nearest zero bounds (if any found and within reasonable range)
+* on bookmark, automatically set clip start and end to nearest 'silent times' (if any found and within reasonable range)
 * auto-set transcription if bounds are set
 
 * change title.
