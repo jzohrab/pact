@@ -79,6 +79,9 @@ class TextCallback(TranscriptionCallback):
 
         self.current_partial_result = None
 
+        # An additional callback for this callback!
+        self.on_finished = None
+
         # Vosk returns 'partial results' as it processes, but then
         # each individual sentence (as best as Vosk can determine)
         # is returned as a 'result', or a 'final result'.
@@ -139,6 +142,8 @@ class TextCallback(TranscriptionCallback):
     def final_result(self, r):
         self.result(r)
         self.alert_update()
+        if self.on_finished:
+            self.on_finished(self.transcription())
         print()
         print('done')
 

@@ -22,6 +22,7 @@ from tkinter import messagebox
 import pact.voskutils
 import pact.music
 from pact.utils import TimeUtils, anki_card_export, StoppableThread
+import pact.textmatch
 
 
 class SliderMarkersWidget:
@@ -92,15 +93,17 @@ class MainWindow:
         self.window = window
         self.music_file = None
         self.song_length_ms = 0
+        self.transcription_file = None
 
         menubar = Menu(self.window)
         self.window['menu'] = menubar
         menu_file = Menu(menubar)
         menubar.add_cascade(menu=menu_file, label='File')
         menu_file.add_command(label='Open mp3', command=self.load)
+        menu_file.add_command(label='Open transcription', command=self.load_transcription)
         menu_file.add_separator()
-        menu_file.add_command(label='Save current session', command=self.save_app_state)
-        menu_file.add_command(label='Reload session', command=self.load_app_state)
+        menu_file.add_command(label='Open session', command=self.load_app_state)
+        menu_file.add_command(label='Save session', command=self.save_app_state)
         menu_file.add_separator()
         menu_file.add_command(label='Close', command=self.quit)
 
@@ -202,7 +205,7 @@ class MainWindow:
         b = self.bookmarks[i]
 
         self.music_player.pause()
-        d = BookmarkWindow(self.window, b, self.music_file, self.song_length_ms)
+        d = BookmarkWindow(self.window, b, self.music_file, self.song_length_ms, self.transcription_file)
         self.window.wait_window(d.root)
         d.root.grab_release()
         # Re-select, b/c switching to the pop-up deselects the current.
@@ -283,6 +286,12 @@ class MainWindow:
         else:
             print("no file?")
 
+    def load_transcription(self):
+        f = filedialog.askopenfilename()
+        if f:
+            self.transcription_file = f
+        else:
+            print("no transcription file")
 
     def _load_song_details(self, f):
         song_mut = MP3(f)
@@ -319,9 +328,14 @@ class MainWindow:
         def from_app(mainwindow):
             s = MainWindow.ApplicationState()
             s.music_file = mainwindow.music_file
+            s.transcription_file = mainwindow.transcription_file
             s.music_player_pos = mainwindow.music_player.get_pos()
             s.bookmarks = mainwindow.bookmarks
             return s
+
+        def print(self):
+            print(f'File: {self.music_file}')
+            print(f'Transcription: {self.transcription_file}')
 
 
     def save_app_state(self):
@@ -341,7 +355,7 @@ class MainWindow:
     def load_app_state(self):
         """Load previously pickled state."""
         f = filedialog.askopenfilename(filetypes = (("Clips file", "*.clips"),))
-        self._load_state_file(self, f)
+        self._load_state_file(f)
 
 
     def _load_state_file(self, f):
@@ -351,8 +365,10 @@ class MainWindow:
         appstate = None
         with open(f, "rb") as src:
             appstate = pickle.load(src)
+        appstate.print()
         self._load_song_details(appstate.music_file)
         self.music_player.reposition(appstate.music_player_pos)
+        self.transcription_file = appstate.transcription_file
         self.bookmarks = appstate.bookmarks
         self.reload_bookmark_list()
 
@@ -360,10 +376,11 @@ class MainWindow:
 class BookmarkWindow(object):
     """Bookmark / clip editing window."""
 
-    def __init__(self, parent, bookmark, music_file, song_length_ms):
+    def __init__(self, parent, bookmark, music_file, song_length_ms, transcription_file):
         self.bookmark = bookmark
         self.music_file = music_file
         self.song_length_ms = song_length_ms
+        self.transcription_file = transcription_file
 
         self.parent = parent
         self.root=Toplevel(parent)
@@ -539,8 +556,8 @@ class BookmarkWindow(object):
             # If the clip is not defined yet, assume that the user
             # clicked "bookmark" *after* hearing something interesting
             # and pad a bit more before than after.
-            sl_min = bk.position_ms - 3 * padding
-            sl_max = bk.position_ms + padding
+            sl_min = bk.position_ms - 5 * padding
+            sl_max = bk.position_ms + 3 * padding
 
         # Respect bounds.
         sl_min = int(max(0, sl_min))
@@ -587,16 +604,50 @@ class BookmarkWindow(object):
         self.music_player.play()
 
 
+    def __match_with_transcription_file(self, sought):
+        if self.transcription_file is None:
+            print('no transcription file, returning')
+            return None
+
+        contents = None
+        with open(self.transcription_file) as f:
+            contents = f.read()
+
+        fuzzy_text_match_accuracy = 80
+        matches = pact.textmatch.search(contents, sought, True, fuzzy_text_match_accuracy)
+        if len(matches) == 0:
+            print('no matches')
+            return None
+
+        print('got matches:')
+        print(matches)
+        result = [ pact.textmatch.ellipsify(m['match'], m['context']) for m in matches ]
+        return '\n\n'.join(result).strip()
+
+
     def transcribe(self):
         c = self.get_clip()
         if c is None:
             return
 
         self.stop_current_transcription()
+
+        def try_transcription_search(sought):
+            transcription_match = self.__match_with_transcription_file(sought)
+            if transcription_match is None:
+                return
+            t = self.transcription_textbox
+            # Weird that it's 1.0 ... ref stackoverflow question 27966626.
+            t.delete(1.0, END)
+            t.insert(1.0, transcription_match)
+
         def do_transcription():
             cb = pact.voskutils.TextCallback(self.parent, self.transcription_textbox, self.transcription_progress)
+            if self.transcription_file is not None:
+                cb.on_finished = lambda s: try_transcription_search(s)
             self.transcription_callback = cb
             pact.voskutils.transcribe_audiosegment(c, cb)
+
         self.transcription_thread = StoppableThread(target=do_transcription)
         self.transcription_thread.start()
 

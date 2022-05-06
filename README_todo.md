@@ -24,6 +24,7 @@
 * final README updates
 
 * session reload fails if mp3 file has moved ... should it? maybe add menu "reload session with current file"
+* also fails if transcription file moved.
 
 ## After MVP, possible pre-release
 
