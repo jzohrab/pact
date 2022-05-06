@@ -96,6 +96,8 @@ class MainWindow:
         self.song_length_ms = 0
         self.transcription_file = None
 
+        self.set_title()
+
         menubar = Menu(self.window)
         self.window['menu'] = menubar
         menu_file = Menu(menubar)
@@ -110,7 +112,7 @@ class MainWindow:
 
         # Layout
         master_frame = Frame(window)
-        master_frame.grid(row=0, column=0, padx=50, pady=50)
+        master_frame.grid(row=0, column=0, padx=50, pady=20)
 
         bk_frame = Frame(master_frame)
         bk_frame.grid(row=2, column=0, pady=10)
@@ -287,22 +289,38 @@ class MainWindow:
         else:
             print("no file?")
 
-    def load_transcription(self):
-        f = filedialog.askopenfilename()
-        if f:
-            self.transcription_file = f
-        else:
-            print("no transcription file")
 
     def _load_song_details(self, f):
         song_mut = MP3(f)
         self.song_length_ms = song_mut.info.length * 1000  # length is in seconds
         self.slider.config(to = self.song_length_ms, value=0)
         self.slider_lbl.configure(text=TimeUtils.time_string(self.song_length_ms))
+
         self.music_file = f
+        self.set_title()
+
         self.music_player.load_song(f, self.song_length_ms)
         self.bookmarks = [ MainWindow.FullTrackBookmark() ]
         self.reload_bookmark_list()
+
+
+    def load_transcription(self):
+        f = filedialog.askopenfilename()
+        if f:
+            self._load_transcription(f)
+        else:
+            print("no transcription file")
+
+
+    def _load_transcription(self, f):
+        self.transcription_file = f
+        self.set_title()
+
+
+    def set_title(self):
+        parts = [ self.music_file, self.transcription_file ]
+        parts = [ os.path.basename(x) for x in parts if x ]
+        self.window.title(f"Pact v{__version__}: {' / '.join(parts)}")
 
 
     def play_pause(self):
@@ -368,8 +386,8 @@ class MainWindow:
             appstate = pickle.load(src)
         appstate.print()
         self._load_song_details(appstate.music_file)
+        self._load_transcription(appstate.transcription_file)
         self.music_player.reposition(appstate.music_player_pos)
-        self.transcription_file = appstate.transcription_file
         self.bookmarks = appstate.bookmarks
         self.reload_bookmark_list()
 
