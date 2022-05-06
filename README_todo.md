@@ -13,10 +13,6 @@
 
 * config file config.ini required at startup
 
-* Change "Clip mm:ss - mm:ss" to show just the start time, if only that is set (Clip: "06m17.s - ?")
-* If the start time is set after the end, set end to null
-* When "Clip mm:ss - mm:ss" present, user can click on time to move slider to it.  simplifies adjustments.
-
 * add "export all" button on main form?
 * fresh checkout, install, build from scratch in new venv
 * final README updates

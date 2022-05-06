@@ -67,6 +67,9 @@ deactivate
 
 * `<Command-s>`: Set the clip start
 * `<Command-e>`: Set the clip end
+* `<Command-Shift-s>`: Move slider to clip start
+* `<Command-Shift-e>`: Move slider to clip end
+
 * `<Command-l>`: Play clip between start and end
 * `<Command-t>`: Transcribe clip
 

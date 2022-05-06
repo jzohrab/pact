@@ -514,13 +514,18 @@ class BookmarkWindow(object):
         # lambdas did not work ... they just closed the form.  Code in
         # loop was"self.root.bind(f'<{hotkey}>', lambda e: comm())".
         self.root.bind('<Command-p>', lambda e: self.play_pause())
+
         self.root.bind('<Right>', lambda e: self.music_player.increment(100))
         self.root.bind('<Left>', lambda e: self.music_player.increment(-100))
         self.root.bind('<Command-Right>', lambda e: self.music_player.increment(1000))
         self.root.bind('<Command-Left>', lambda e: self.music_player.increment(-1000))
         self.root.bind('<Command-r>', lambda e: self.music_player.reposition(self.from_val))
+
         self.root.bind('<Command-s>', lambda e: self.start_var.set(self.slider_var.get()))
         self.root.bind('<Command-e>', lambda e: self.end_var.set(self.slider_var.get()))
+        self.root.bind('<Command-Shift-s>', lambda e: self.music_player.reposition(self.start_var.get()))
+        self.root.bind('<Command-Shift-e>', lambda e: self.music_player.reposition(self.end_var.get()))
+
         self.root.bind('<Command-l>', lambda e: self.play_clip())
         self.root.bind('<Command-t>', lambda e: self.transcribe())
         self.root.bind('<Command-x>', lambda e: self.export())
