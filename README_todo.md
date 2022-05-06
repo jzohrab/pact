@@ -3,6 +3,9 @@
 
 ## MVP TODO (usable for me)
 
+* can copy text box without playing clip
+* can hit return in text box without closing clip
+
 * need some kind of status update on export, "success" or similar.
 * if exporting on thread, then gui update shouldn't cause seg fault.
 * save the exported date with the clip
@@ -11,7 +14,6 @@
 * on bookmark, automatically set clip start and end to nearest 'silent times' (if any found and within reasonable range)
 * auto-set transcription if bounds are set
 
-* change title.
 * config file config.ini required at startup
 
 * Change "Clip mm:ss - mm:ss" to show just the start time, if only that is set (Clip: "06m17.s - ?")
@@ -27,6 +29,7 @@
 
 ## After MVP, possible pre-release
 
+* change version
 * fix TODOs in README.md
 * packaging?
 

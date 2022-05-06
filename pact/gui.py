@@ -22,6 +22,7 @@ from tkinter import messagebox
 import pact.voskutils
 import pact.music
 from pact.utils import TimeUtils, anki_card_export, StoppableThread, audiosegment_from_mp3_time_range
+from pact._version import __version__
 import pact.textmatch
 
 
@@ -88,7 +89,7 @@ class MainWindow:
 
 
     def __init__(self, window):
-        window.title('MP3 Player')
+        window.title(f'Pact v{__version__}')
         window.geometry('600x400')
         self.window = window
         self.music_file = None
