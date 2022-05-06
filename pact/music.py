@@ -241,7 +241,7 @@ class Bookmark:
         ret = f"{s} - {e}"
 
         t = self.transcription
-        if t is not None and t != '':
+        if t is not None and t.strip() != '':
             clipped = t[:50]
             if clipped != t:
                 clipped += ' ...'
