@@ -57,7 +57,7 @@ deactivate
 
 ### Clip editor popup
 
-* `<Command-p>`: Play/pause clip
+* `<Command-p>`: Play/pause full clip
 * `<Command-r>`: Reset the slider to 0
 
 * `<Right>`: Advance slider 100 ms
@@ -67,11 +67,11 @@ deactivate
 
 * `<Command-s>`: Set the clip start
 * `<Command-e>`: Set the clip end
-* `<Command-c>`: Play clip
+* `<Command-l>`: Play clip between start and end
 * `<Command-t>`: Transcribe clip
 
 * `<Command-x>`: Export clip and transcription to Anki
-* `<Return>`: Close (and save) clip
+* `<Command-k>`: OK.  Close (and save) clip
 
 
 # Dev notes

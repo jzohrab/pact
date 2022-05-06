@@ -3,9 +3,6 @@
 
 ## MVP TODO (usable for me)
 
-* can copy text box without playing clip
-* can hit return in text box without closing clip
-
 * need some kind of status update on export, "success" or similar.
 * if exporting on thread, then gui update shouldn't cause seg fault.
 * save the exported date with the clip

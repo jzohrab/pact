@@ -521,10 +521,10 @@ class BookmarkWindow(object):
         self.root.bind('<Command-r>', lambda e: self.music_player.reposition(self.from_val))
         self.root.bind('<Command-s>', lambda e: self.start_var.set(self.slider_var.get()))
         self.root.bind('<Command-e>', lambda e: self.end_var.set(self.slider_var.get()))
-        self.root.bind('<Command-c>', lambda e: self.play_clip())
+        self.root.bind('<Command-l>', lambda e: self.play_clip())
         self.root.bind('<Command-t>', lambda e: self.transcribe())
         self.root.bind('<Command-x>', lambda e: self.export())
-        self.root.bind('<Return>', lambda e: self.ok())
+        self.root.bind('<Command-k>', lambda e: self.ok())
 
         # Modal window.
         # Wait for visibility or grab_set doesn't seem to work.
