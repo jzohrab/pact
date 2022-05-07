@@ -11,7 +11,7 @@
 * on bookmark, automatically set clip start and end to nearest 'silent times' (if any found and within reasonable range)
 * auto-set transcription if bounds are set
 
-* config file config.ini required at startup
+* check config.ini file exists at startup.
 
 * add "export all" button on main form?
 * fresh checkout, install, build from scratch in new venv

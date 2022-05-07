@@ -2,10 +2,18 @@
 
 [Anki]
 Ankiconnect = http://localhost:8765/
-MediaFolder = /Users/jeff/Library/Application Support/Anki2/User 1/collection.media/
 
+# Where media files should be stored.
+MediaFolder = /path/to/Anki2/User 1/collection.media/
+
+# Settings required for the data sent to Anki via Ankiconnect.
 [AnkiCard]
+
+# Where the exported cards should go.
 Deck = Spanish::03_Spanish_audio
+
+# The note type for the exported cards, and the fields to use for the
+# audio clip and for the transcription.
 NoteType = Audio_clip
 AudioField = Audio
 TranscriptionField = Text
