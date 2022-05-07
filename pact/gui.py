@@ -459,8 +459,13 @@ class BookmarkWindow(object):
         slider_frame = Frame(self.root)
         slider_frame.grid(row=1, column=0, pady=10)
 
-        w = self.plot(slider_frame, 7)
+        w, fig = self.plot(slider_frame, 7)
         w.grid(row=0, column=0, pady=10)
+
+        # Keep a handle on fig, so can close it when the window
+        # closes; otherwise, this eventually gets a warning.
+        # ref https://heitorpb.github.io/bla/2020/03/18/close-matplotlib-figures/
+        self.fig = fig
 
         # Had to guess the best slider length, as I couldn't figure
         # out how to calculate it exactly using the matplotlib figure
@@ -794,6 +799,8 @@ class BookmarkWindow(object):
         self.music_player.stop()
         self.stop_current_transcription()
         self.save_clip()
+        if self.fig:
+            plt.close(self.fig)
         self.root.grab_release()
         self.root.destroy()
 
@@ -843,4 +850,5 @@ class BookmarkWindow(object):
         plot1.plot(signal)
         
         canvas = FigureCanvasTkAgg(fig, master = frame)
-        return canvas.get_tk_widget()
+
+        return (canvas.get_tk_widget(), fig)
