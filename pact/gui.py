@@ -217,6 +217,7 @@ class MainWindow:
         d = BookmarkWindow(
             parent = self.window,
             bookmark = b,
+            allbookmarks = self.bookmarks,
             music_file = self.music_file,
             song_length_ms = self.song_length_ms,
             transcription_file = self.transcription_file
@@ -422,7 +423,7 @@ class MainWindow:
 class BookmarkWindow(object):
     """Bookmark / clip editing window."""
 
-    def __init__(self, parent, bookmark, music_file, song_length_ms, transcription_file):
+    def __init__(self, parent, bookmark, allbookmarks, music_file, song_length_ms, transcription_file):
         self.bookmark = bookmark
         self.music_file = music_file
         self.song_length_ms = song_length_ms
@@ -433,7 +434,7 @@ class BookmarkWindow(object):
         self.root.protocol('WM_DELETE_WINDOW', self.ok)
         self.root.geometry('550x450')
 
-        self.from_val, self.to_val = self.get_slider_from_to(bookmark)
+        self.from_val, self.to_val = self.get_slider_from_to(bookmark, allbookmarks)
 
         # Pre-calc graphing data.  If from_val or to_val change, must recalc.
         self.signal_plot_data = self.get_signal_plot_data(self.from_val, self.to_val)
@@ -599,9 +600,21 @@ class BookmarkWindow(object):
             set_marker(e)
 
 
-    def get_slider_from_to(self, bk):
+    def get_slider_from_to(self, bk, allbookmarks):
         sl_min = sl_max = None
-        padding = 5000
+        padding = 5000  # Arbitrary.
+
+        def _last_end_bound_before_bk_position():
+            ends_before = [
+                b.clip_bounds_ms[1]
+                for b in allbookmarks
+                if b.clip_bounds_ms and b.clip_bounds_ms[1] < bk.position_ms
+            ]
+            # print(f'for position {bk.position_ms}, got clip ends before = {ends_before}')
+            if len(ends_before) == 0:
+                return 0
+            # print(f'max is {max(ends_before)}')
+            return max(ends_before)
 
         if bk.clip_bounds_ms:
             sl_min = bk.clip_bounds_ms[0] - padding
@@ -611,6 +624,17 @@ class BookmarkWindow(object):
             # clicked "bookmark" *after* hearing something interesting
             # and pad a bit more before than after.
             sl_min = bk.position_ms - 5 * padding
+
+            # Don't bother showing the user *much* time before
+            # already-defined clip ends that fall before
+            # bk.position_ms, because the user has already spent time
+            # listening and defining the end point.
+            last_end = _last_end_bound_before_bk_position()
+            if sl_min < last_end:
+                # print(f'min {sl_min} falls before last_end = {last_end}, so changing it')
+                sl_min = last_end - (padding / 2)
+                # print(f'min {sl_min}, updated')
+
             sl_max = bk.position_ms + 3 * padding
 
         # Respect bounds.
