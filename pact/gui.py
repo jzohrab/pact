@@ -244,6 +244,8 @@ class MainWindow:
 
 
     def add_bookmark(self, m = None):
+        if self.music_file is None:
+            return
         v = m
         if v is None:
             v = float(self.slider.get())
