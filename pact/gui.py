@@ -432,6 +432,7 @@ class BookmarkWindow(object):
         self.root=Toplevel(parent)
         self.root.protocol('WM_DELETE_WINDOW', self.ok)
         self.root.geometry('550x450')
+        self.reposition_popup(parent, 50, 50)
 
         self.from_val, self.to_val = self.get_slider_from_to(bookmark, allbookmarks)
 
@@ -589,6 +590,12 @@ class BookmarkWindow(object):
 
         # On open, always play the defined clip.
         self.play_clip()
+
+
+    def reposition_popup(self, parent, delta_x, delta_y):
+        win_x = parent.winfo_rootx() + delta_x
+        win_y = parent.winfo_rooty() + delta_y
+        self.root.geometry(f'+{win_x}+{win_y}')
 
 
     def set_clip_bounds_markers(self):
