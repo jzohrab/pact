@@ -92,9 +92,15 @@ class MainWindow:
         window.title(f'Pact v{__version__}')
         window.geometry('600x400')
         self.window = window
+        self.window.protocol('WM_DELETE_WINDOW', self.quit)
         self.music_file = None
         self.song_length_ms = 0
         self.transcription_file = None
+
+        # Storing the session filename for auto-saving, because it's a
+        # hassle keeping track of dirty/not.  Just keep saving for
+        # now.
+        self.session_file = None
 
         self.set_title()
 
@@ -102,7 +108,7 @@ class MainWindow:
         self.window['menu'] = menubar
         menu_file = Menu(menubar)
         menubar.add_cascade(menu=menu_file, label='File')
-        menu_file.add_command(label='Open mp3', command=self.load)
+        menu_file.add_command(label='Open mp3', command=self.load_mp3)
         menu_file.add_command(label='Open transcription', command=self.load_transcription)
         menu_file.add_separator()
         menu_file.add_command(label='Open session', command=self.load_app_state)
@@ -208,8 +214,16 @@ class MainWindow:
         b = self.bookmarks[i]
 
         self.music_player.pause()
-        d = BookmarkWindow(self.window, b, self.music_file, self.song_length_ms, self.transcription_file)
+        d = BookmarkWindow(
+            parent = self.window,
+            bookmark = b,
+            music_file = self.music_file,
+            song_length_ms = self.song_length_ms,
+            transcription_file = self.transcription_file
+        )
         self.window.wait_window(d.root)
+        self._save_session()
+
         d.root.grab_release()
         # Re-select, b/c switching to the pop-up deselects the current.
         self.bookmarks_lst.activate(i)
@@ -282,9 +296,11 @@ class MainWindow:
         self.music_player.reposition(b.position_ms)
 
 
-    def load(self):
+    def load_mp3(self):
         f = filedialog.askopenfilename()
         if f:
+            # No longer using existing session.
+            self.session_file = None
             self._load_song_details(f)
         else:
             print("no file?")
@@ -365,9 +381,18 @@ class MainWindow:
         if f is None or f ==  '':
             print("Cancelled")
             return
+        self.session_file = f
+        self._save_session()
+
+
+    def _save_session(self):
+        """Save session, either explicitly from user or when any bookmark changes."""
+        if self.session_file is None:
+            print('No session file, not saving.')
+            return
 
         appstate = MainWindow.ApplicationState.from_app(self)
-        with open(f, "wb") as dest:
+        with open(self.session_file, "wb") as dest:
             pickle.dump(appstate, dest, protocol=0)
 
 
@@ -382,7 +407,9 @@ class MainWindow:
             print("Cancelled")
             return
         appstate = None
-        with open(f, "rb") as src:
+
+        self.session_file = f
+        with open(self.session_file, "rb") as src:
             appstate = pickle.load(src)
         appstate.print()
         self._load_song_details(appstate.music_file)
