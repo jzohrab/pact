@@ -139,6 +139,14 @@ python main.py
 deactivate
 ```
 
+or (tested on Mac):
+
+```
+./pact.sh
+```
+
+## Using
+
 Open an mp3 file and a .txt translation file, and start making bookmarks.
 
 TODO: create a YouTube video or similar to demonstrate usage.
