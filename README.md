@@ -216,16 +216,24 @@ pip3 install X
 pip3 freeze > requirements.txt
 ```
 
-## Extra config settings
+## Dev config
+
+Use `PACTCONFIG` env variable to use a different config file (e.g., for different Anki export deck, etc.):
+
+```
+PACTCONFIG=config-dev.ini ./pact.sh
+```
+
+### Extra config settings:
 
 ```
 # Add this section
 [Dev]
 
-# e.g., load this session file on start:
+# Load this session file on start:
 SessionFile = /path/to/some/file.clips
 
-# Load this mp3 on start, if SessionFile not config'd
+# Load this mp3 on start, if SessionFile not present
 LoadFile = /path/to/file.mp3
 ```
 

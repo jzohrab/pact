@@ -1,6 +1,5 @@
 # GUI
 
-import configparser
 import json
 import matplotlib.pyplot as plt
 import numpy as np
@@ -21,7 +20,8 @@ from tkinter import messagebox
 
 import pact.voskutils
 import pact.music
-from pact.utils import TimeUtils, anki_card_export, StoppableThread, audiosegment_from_mp3_time_range
+import pact.utils
+from pact.utils import TimeUtils, StoppableThread
 from pact._version import __version__
 import pact.textmatch
 
@@ -190,8 +190,7 @@ class MainWindow:
 
 
     def init_dev(self):
-        config = configparser.ConfigParser()
-        config.read('config.ini')
+        config = pact.utils.get_config()
         if not config.has_section('Dev'):
             return
         print('Doing dev configuration')
@@ -661,7 +660,7 @@ class BookmarkWindow(object):
         bounds = self.get_clip_bounds()
         if not bounds:
             return None
-        return audiosegment_from_mp3_time_range(self.music_file, bounds[0], bounds[1])
+        return pact.utils.audiosegment_from_mp3_time_range(self.music_file, bounds[0], bounds[1])
         
 
     def play_clip(self):
@@ -775,7 +774,7 @@ class BookmarkWindow(object):
             print('no clip')
             return
 
-        r = anki_card_export(c, self.bookmark.transcription)
+        r = pact.utils.anki_card_export(c, self.bookmark.transcription)
         e = r.json()['error']
         if e is not None:
             msg = f'Message from Anki/Ankiconnect: {e}'
@@ -806,7 +805,7 @@ class BookmarkWindow(object):
 
 
     def get_signal_plot_data(self, from_val, to_val):
-        sound = audiosegment_from_mp3_time_range(self.music_file, from_val, to_val)
+        sound = pact.utils.audiosegment_from_mp3_time_range(self.music_file, from_val, to_val)
         sound = sound.set_channels(1)
 
         # Hack for plotting: export to a .wav file.  I can't

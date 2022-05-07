@@ -2,6 +2,7 @@ from datetime import datetime
 from tempfile import NamedTemporaryFile
 import configparser
 import os
+import sys
 import requests
 import shutil
 import ffmpeg
@@ -25,6 +26,17 @@ class TimeUtils:
         ss = TimeUtils.time_string(s)
         es = TimeUtils.time_string(e)
         return f'{ss} - {es}'
+
+
+def get_config():
+    """Return configparser.config for config.ini, or the value in PACTCONFIG env var."""
+    config = configparser.ConfigParser()
+    filename = os.environ.get('PACTCONFIG', 'config.ini')
+    if not os.path.exists(filename):
+        print(f'\nMissing required config file {filename}, quitting.\n')
+        sys.exit(1)
+    config.read(filename)
+    return config
 
 
 # From https://stackoverflow.com/questions/323972/is-there-any-way-to-kill-a-thread/
@@ -71,8 +83,7 @@ def audiosegment_from_mp3_time_range(path_to_mp3, starttime_ms, endtime_ms):
 def anki_card_export(audiosegment, transcription = None):
     """Export the current clip and transcription to Anki using Ankiconnect."""
 
-    config = configparser.ConfigParser()
-    config.read('config.ini')
+    config = get_config()
     destdir = config['Anki']['MediaFolder']
 
     now = datetime.now() # current date and time

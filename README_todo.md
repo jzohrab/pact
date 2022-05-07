@@ -10,7 +10,6 @@
 ## Possible future TODOs
 
 * add tags to exported file (set at the top window)
-* check config.ini file exists at startup.
 * fresh checkout, install, build from scratch in new venv
 
 * packaging to release as application?
