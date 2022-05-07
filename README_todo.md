@@ -6,11 +6,9 @@
 * change version
 * record simple YouTube video of usage, update link in README.
 * fix TODOs in README.md
+* fresh checkout, install, build from scratch in new venv, before posting anywhere
 
 ## Possible future TODOs
-
-* add tags to exported file (set at the top window)
-* fresh checkout, install, build from scratch in new venv
 
 * packaging to release as application?
 * some kind of status update on export, "success" or similar.
@@ -18,8 +16,7 @@
 * save the exported date with the clip
 * if already exported, ask if want to re-export
 * on bookmark, automatically set clip start and end to nearest 'silent times' (if any found and within reasonable range)
-* auto-set transcription if bounds are set
-* add "export all" button on main form?
+* add "export all" button on main form to export anything not already exported.  Would need status feedback/window, pass/fail indication in bookmark list, and reporting on failures.
 
 * hotkey help - https://mail.python.org/pipermail/python-list/2003-April/229647.html
 * maybe "add note" to bookmark

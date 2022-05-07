@@ -80,7 +80,20 @@ def audiosegment_from_mp3_time_range(path_to_mp3, starttime_ms, endtime_ms):
     return seg
 
 
-def anki_card_export(audiosegment, transcription = None):
+def anki_tag_from_filename(f):
+    tag = os.path.basename(f)
+    tag = ''.join([
+        c
+        for c in tag
+        if c.isalnum() or c in "._- "
+    ])
+    if tag == '.mp3':
+        tag = 'Unknown.mp3'
+    tag = tag.replace(' ', '-')
+    return tag
+
+
+def anki_card_export(audiosegment, transcription = None, tag = None):
     """Export the current clip and transcription to Anki using Ankiconnect."""
 
     config = get_config()
@@ -119,6 +132,9 @@ def anki_card_export(audiosegment, transcription = None):
             }
         }
     }
+
+    if tag is not None and tag != '':
+        postjson['params']['note']['tags'] = [ tag ]
 
     print(f'posting: {postjson}')
     url = config['Anki']['Ankiconnect']

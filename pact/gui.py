@@ -774,7 +774,12 @@ class BookmarkWindow(object):
             print('no clip')
             return
 
-        r = pact.utils.anki_card_export(c, self.bookmark.transcription)
+        tag = pact.utils.anki_tag_from_filename(self.music_file)
+        r = pact.utils.anki_card_export(
+            c,
+            transcription = self.bookmark.transcription,
+            tag = tag
+        )
         e = r.json()['error']
         if e is not None:
             msg = f'Message from Anki/Ankiconnect: {e}'
