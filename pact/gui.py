@@ -555,6 +555,9 @@ class BookmarkWindow(object):
         self.root.grab_set()
         self.root.transient(parent)
 
+        # On open, always play the defined clip.
+        self.play_clip()
+
 
     def set_clip_bounds_markers(self):
         def set_marker(var, fill="red"):
