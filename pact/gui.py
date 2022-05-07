@@ -377,7 +377,7 @@ class MainWindow:
         """Pickle app state for later reload."""
         suggested = os.path.basename(self.music_file)
         fname, ext = os.path.splitext(suggested)
-        f = filedialog.asksaveasfilename(initialfile = f'{fname}.clips', filetypes = (("Clips file", "*.clips"),))
+        f = filedialog.asksaveasfilename(initialfile = f'{fname}.pact', filetypes = (("Pact clips file", "*.pact"),))
         if f is None or f ==  '':
             print("Cancelled")
             return
@@ -398,7 +398,7 @@ class MainWindow:
 
     def load_app_state(self):
         """Load previously pickled state."""
-        f = filedialog.askopenfilename(filetypes = (("Clips file", "*.clips"),))
+        f = filedialog.askopenfilename(filetypes = (("Pact clips file", "*.pact"),))
         self._load_state_file(f)
 
 
