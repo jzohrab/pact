@@ -105,6 +105,9 @@ This is an add-on for Anki.  See
 [https://ankiweb.nqet/shared/info/2055492159](AnkiConnect add-on) on
 AnkiWeb.
 
+See https://github.com/FooSoft/anki-connect#installation for possible
+additional setup required.
+
 ### Anki notes
 
 You'll need a Note Type with separate fields for the audio file and
@@ -115,6 +118,77 @@ If you're going to leave the transcription blank -- e.g., if you
 delete the transcription suggestions that `pact` provides using Vosk
 -- the Transcription field can't be the first field in the Note type,
 because Anki doesn't allow empty first fields.
+
+<details>
+  <summary>Sample card layout</summary>
+  <p>
+
+Front template:
+
+```
+<div style="background-color: black; margin: 20px; margin-top: 50px;">
+  {{Text}}
+</div>
+
+{{Audio}}
+
+<div class="tag">{{Tags}}</div>
+```
+
+Back template:
+
+```
+<div style="/* background-color: black;*/ margin: 20px; margin-top: 50px;">
+  {{Text}}
+</div>
+
+{{Audio}}
+
+<div class="tag">{{Tags}}</div>
+
+
+{{#Extra_info}}
+  <br>
+  <div style="text-align: center;">
+  <div style="display: inline-block;" class="greybox">
+  {{Extra_info}}
+  </div>
+</div>
+{{/Extra_info}}
+```
+
+Styling:
+
+```
+.card {
+ font-family: arial;
+ font-size: 20px;
+ text-align: center;
+ color: black;
+ background-color: white;
+}
+
+.tag {
+ font-size: 12px;
+ color: grey;
+ font-style: italic;
+ padding: 10px;
+ text-align: right;
+}
+
+.greybox {
+  text-align: left;
+  max-width: 400px;
+  background-color: #f5f5f5;
+  padding: 5px;
+}
+
+.card1 { background-color: #FFFFFF; }
+.card2 { background-color: #FFFFFF; }
+```
+  </p>
+</details>
+
 
 ### config.ini
 
