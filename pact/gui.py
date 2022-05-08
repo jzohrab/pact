@@ -301,7 +301,7 @@ class MainWindow:
 
 
     def load_mp3(self):
-        f = filedialog.askopenfilename()
+        f = filedialog.askopenfilename(filetypes = (("mp3", "*.mp3"),))
         if f:
             # No longer using existing session.
             self.session_file = None
@@ -325,7 +325,7 @@ class MainWindow:
 
 
     def load_transcription(self):
-        f = filedialog.askopenfilename()
+        f = filedialog.askopenfilename(filetypes = (("Text file", "*.txt"),))
         if f:
             self._load_transcription(f)
         else:
@@ -360,8 +360,12 @@ class MainWindow:
 
 
     class ApplicationState:
+
         def __init__(self):
-            pass
+            self.music_file = None
+            self.transcription_file = None
+            self.music_player_pos = None
+            self.bookmarks = []
 
         @staticmethod
         def from_app(mainwindow):
@@ -373,8 +377,25 @@ class MainWindow:
             return s
 
         def print(self):
-            print(f'File: {self.music_file}')
-            print(f'Transcription: {self.transcription_file}')
+            print(self.to_dict())
+
+        def to_dict(self):
+            """For serialization."""
+            return {
+                'music_file': self.music_file,
+                'transcription_file': self.transcription_file,
+                'music_player_pos': self.music_player_pos,
+                'bookmarks': [ b.to_dict() for b in self.bookmarks ]
+            }
+
+        @staticmethod
+        def from_dict(d):
+            s = MainWindow.ApplicationState()
+            s.music_file = d['music_file']
+            s.transcription_file = d['transcription_file']
+            s.music_player_pos = d['music_player_pos']
+            s.bookmarks = [ pact.music.Bookmark.from_dict(bd) for bd in d['bookmarks'] ]
+            return s
 
 
     def save_app_state(self):
@@ -396,9 +417,9 @@ class MainWindow:
             return
 
         appstate = MainWindow.ApplicationState.from_app(self)
-        with open(self.session_file, "wb") as dest:
-            pickle.dump(appstate, dest, protocol=0)
-
+        j = json.dumps(appstate.to_dict(), indent = 2)
+        with open(self.session_file, "w") as dest:
+            dest.write(j)
 
     def load_app_state(self):
         """Load previously pickled state."""
@@ -413,8 +434,11 @@ class MainWindow:
         appstate = None
 
         self.session_file = f
-        with open(self.session_file, "rb") as src:
-            appstate = pickle.load(src)
+        j = None
+        with open(self.session_file, "r") as src:
+            j = json.loads(src.read())
+
+        appstate = MainWindow.ApplicationState.from_dict(j)
         appstate.print()
         self._load_song_details(appstate.music_file)
         self._load_transcription(appstate.transcription_file)
