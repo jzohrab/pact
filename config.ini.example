@@ -10,9 +10,6 @@ Ankiconnect = http://localhost:8765/
 # Where media files should be stored.
 MediaFolder = /path/to/Anki2/User 1/collection.media/
 
-# Settings required for the data sent to Anki via Ankiconnect.
-[AnkiCard]
-
 # Where the exported cards should go.
 Deck = Spanish::03_Spanish_audio
 

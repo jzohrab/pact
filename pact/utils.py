@@ -106,7 +106,8 @@ def anki_card_export(audiosegment, transcription = None, tag = None):
     """Export the current clip and transcription to Anki using Ankiconnect."""
 
     config = get_config()
-    destdir = config['Anki']['MediaFolder']
+    ankiconfig = config['Anki']
+    destdir = ankiconfig['MediaFolder']
 
     now = datetime.now() # current date and time
     date_time = now.strftime("%Y%m%d_%H%M%S")
@@ -121,22 +122,20 @@ def anki_card_export(audiosegment, transcription = None, tag = None):
         # print('Copied clip to:')
         # print(destname)
 
-    a = config['AnkiCard']
-
     fields = {
-        a['AudioField']: f'[sound:{filename}]'
+        ankiconfig['AudioField']: f'[sound:{filename}]'
     }
 
     if transcription is not None and transcription != '':
-        fields[ a['TranscriptionField'] ] = transcription
+        fields[ ankiconfig['TranscriptionField'] ] = transcription
 
     postjson = {
         "action": "addNote",
         "version": 6,
         "params": {
             "note": {
-                "deckName": a['Deck'],
-                "modelName": a['NoteType'],
+                "deckName": ankiconfig['Deck'],
+                "modelName": ankiconfig['NoteType'],
                 "fields": fields
             }
         }
