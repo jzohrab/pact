@@ -3,7 +3,7 @@ import sys
 import os
 
 sys.path.append(os.path.abspath(sys.path[0]) + '/../')
-from pact.gui import SliderMarkersWidget
+from pact.widgets import SliderMarkersWidget
 
 class TestSliderMarkersWidgetHelper(unittest.TestCase):
 
