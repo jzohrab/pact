@@ -194,9 +194,26 @@ Styling:
 
 Copy `config.ini.example` to `config.ini`, and edit it to match your setup.
 
-* [AnkiConnect](#ankiconnect)
-* [Anki notes](#anki-notes)
 
+### Lookup plugins
+
+> Note: I've only used Pact for Spanish, and so have only written a
+  lookup module for monolingual Spanish lookups (in
+  `./pact/plugins/lookup/spanish/es_thefreedictionary.py`), but one
+  with Python coding experience should be able to implement other
+  dictionary web lookups.
+
+While I haven't needed it myself, Pact _should_ allow for simple
+plugins for lookups.  See ./pact/plugins/lookup/README.md.
+
+If you have a plugin that has the correct function available, you
+should be able to place it in `./myplugins` or in the `plugins`
+folder, and then specify the module name in `config.ini`.
+
+Only use plugins you trust, or that you write yourself ... since they
+execute arbitrary code, they might be malicious etc etc.
+Unfortunately it's not easy to sandbox them (so that they can only do
+"safe" things).
 
 ## Running
 
@@ -238,7 +255,7 @@ This is useful when you're working with longer podcasts etc.
 
 #### Main window
 
-* `<Command-p>'`: Play/pause
+* `<Command-p>`: Play/pause
 
 * `<Right>`: Advance slider 100 ms
 * `<Left>`: Move slider back 100 ms
@@ -271,6 +288,7 @@ This is useful when you're working with longer podcasts etc.
 * `<Command-l>`: Play clip between start and end
 * `<Command-t>`: Transcribe clip
 
+* `<Command-u>`: Lookup selected word using lookup plugin
 * `<Command-x>`: Export clip and transcription to Anki
 * `<Command-k>`: OK.  Close (and save) clip
 

@@ -1,5 +1,9 @@
 # Config file.
 
+[Pact]
+# What code module you want to use for doing clip transcription text lookups.
+LookupModule = pact.plugins.lookup.spanish.es_thefreedictionary
+
 [Anki]
 Ankiconnect = http://localhost:8765/
 

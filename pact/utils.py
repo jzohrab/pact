@@ -8,6 +8,7 @@ import shutil
 import ffmpeg
 import pydub
 import threading
+from importlib import import_module
 
 
 class TimeUtils:
@@ -37,6 +38,14 @@ def get_config():
         sys.exit(1)
     config.read(filename)
     return config
+
+
+def lookup(selected_text):
+    config = get_config()
+    modulename = config['Pact']['LookupModule']
+    mod = import_module(modulename)
+    lookup = getattr(mod, 'lookup')
+    return lookup(selected_text)
 
 
 # From https://stackoverflow.com/questions/323972/is-there-any-way-to-kill-a-thread/

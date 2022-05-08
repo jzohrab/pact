@@ -16,6 +16,7 @@ from pydub import AudioSegment
 from tempfile import NamedTemporaryFile
 from tkinter import *
 from tkinter import filedialog
+import tkinter.scrolledtext as scrolledtext
 from tkinter import messagebox
 
 import pact.voskutils
@@ -527,9 +528,12 @@ class BookmarkWindow(object):
         update_clip_interval_lbl()
         self.set_clip_bounds_markers()
 
-        self.transcription_textbox = Text(
+        deffont = font.nametofont("TkDefaultFont")
+        self.transcription_textbox = scrolledtext.ScrolledText(
             clip_details_frame,
-            height = 5, width = 60, wrap=WORD, borderwidth=1) # relief='solid'
+            height = 6, width = 50, wrap=WORD, borderwidth=1,
+            font = deffont
+        ) # relief='solid'
         if (self.bookmark.transcription):
             self.transcription_textbox.insert(1.0, self.bookmark.transcription)
         clip_interval_lbl.grid(row=0, column=1, pady=2, sticky = W)
@@ -545,8 +549,9 @@ class BookmarkWindow(object):
         self.transcription_progress.grid(row=2, column = 1)
 
         exit_frame = Frame(self.root)
-        exit_frame.grid(row=5, column=0, pady=20)
+        exit_frame.grid(row=5, column=0, pady=5)
         buttons = [
+            [ 'Lookup', self.lookup ],
             [ 'Export', self.export ],
             [ 'OK', self.ok ]
         ]
@@ -582,6 +587,7 @@ class BookmarkWindow(object):
         self.root.bind('<Command-l>', lambda e: self.play_clip())
         self.root.bind('<Command-t>', lambda e: self.transcribe())
         self.root.bind('<Command-x>', lambda e: self.export())
+        self.root.bind('<Command-u>', lambda e: self.lookup())
         self.root.bind('<Command-k>', lambda e: self.ok())
 
         # Modal window.
@@ -774,6 +780,28 @@ class BookmarkWindow(object):
         self.set_clip_bounds()
 
 
+    def lookup(self):
+        """Lookup highlighted word, and open popup window."""
+        term = None
+        tw = self.transcription_textbox
+        if tw.tag_ranges(SEL):
+            term = tw.get(SEL_FIRST, SEL_LAST)
+
+        if term is None or term.strip() == '':
+            print('Nothing selected')
+            return
+        print(f'doing lookup of "{term}"')
+        result = pact.utils.lookup(term)
+
+        d = LookupWindow(
+            parent = self.root,
+            term = term,
+            content = result
+        )
+        self.root.wait_window(d.root)
+        d.root.grab_release()
+
+
     def export(self):
         """Export the current clip and transcription to Anki using Ankiconnect."""
 
@@ -865,3 +893,51 @@ class BookmarkWindow(object):
         canvas = FigureCanvasTkAgg(fig, master = frame)
 
         return (canvas.get_tk_widget(), fig)
+
+
+class LookupWindow(object):
+    """Small popup to show lookup results."""
+
+    def __init__(self, parent, term, content):
+        self.parent = parent
+
+        self.root=Toplevel(parent)
+        self.root.title(term)
+        self.root.protocol('WM_DELETE_WINDOW', self.ok)
+        self.root.geometry('500x400')
+        self.reposition_popup(parent, 50, 50)
+
+        master_frame = Frame(self.root)
+        master_frame.grid(row=0, column=0, padx=20, pady=20)
+
+        txtframe = Frame(master_frame, borderwidth=1, relief='groove')
+        txtframe.grid(row = 1, column = 0)
+        deffont = font.nametofont("TkDefaultFont")
+        self.lookup_textbox = scrolledtext.ScrolledText(
+            txtframe,
+            height = 20, width = 40, wrap=WORD, borderwidth=1,
+            font = deffont) # relief='solid'
+        self.lookup_textbox.grid(row=0, column = 0)
+        self.lookup_textbox.insert(1.0, content)
+
+        b = Button(master_frame, text = 'OK', width = 10, command = self.ok)
+        b.grid(row=2, column = 0, pady = 5)
+
+        self.root.bind('<Command-k>', lambda e: self.ok())
+
+        # Modal window.
+        # Wait for visibility or grab_set doesn't seem to work.
+        self.root.wait_visibility()
+        self.root.grab_set()
+        self.root.transient(parent)
+
+
+    def reposition_popup(self, parent, delta_x, delta_y):
+        win_x = parent.winfo_rootx() + delta_x
+        win_y = parent.winfo_rooty() + delta_y
+        self.root.geometry(f'+{win_x}+{win_y}')
+
+
+    def ok(self):
+        self.root.grab_release()
+        self.root.destroy()
