@@ -444,6 +444,10 @@ class MainWindow:
         self._load_transcription(appstate.transcription_file)
         self.music_player.reposition(appstate.music_player_pos)
         self.bookmarks = appstate.bookmarks
+
+        # First bookmark is really a fake bookmark.
+        self.bookmarks[0] = MainWindow.FullTrackBookmark()
+
         self.reload_bookmark_list()
 
 
