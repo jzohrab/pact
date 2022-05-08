@@ -2,7 +2,6 @@
 
 ## MVP TODO
 
-* session reload fails if mp3 file has moved, or transcription moved ... continue to load, but with big warning.
 * change version
 * record simple YouTube video of usage, update link in README.
 * fix TODOs in README.md
