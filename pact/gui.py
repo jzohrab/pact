@@ -252,8 +252,9 @@ class MainWindow:
             v = float(self.slider.get())
         b = pact.music.Bookmark(v)
         self.bookmarks.append(b)
-        i = len(self.bookmarks) - 1
+        self._save_session()
 
+        i = len(self.bookmarks) - 1
         lst = self.bookmarks_lst
         lst.selection_clear(0, END)
         lst.insert(END, b.display())
