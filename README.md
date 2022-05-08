@@ -246,10 +246,13 @@ TODO: create a YouTube video or similar to demonstrate usage.
 
 `Menu > File > Save session` saves the currently loaded files (mp3 and
 transcription) and any defined bookmarks to disk.  Then later, you can
-reload that session and continue.
+reload that session with `Menu > File > Open session` and continue.
 
 This is useful when you're working with longer podcasts etc.
 
+The session file (`.pact`) is just json, so if needed you can open the
+file in an editor and update it, e.g. if the mp3 or transcription
+files have moved or been renamed.
 
 ### GUI Hotkeys
 
