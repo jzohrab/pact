@@ -438,7 +438,7 @@ class MainWindow:
             j = json.loads(src.read())
 
         appstate = MainWindow.ApplicationState.from_dict(j)
-        appstate.print()
+        # appstate.print()
 
         def _is_present(fieldname, filename):
             if filename is not None and os.path.exists(filename):
