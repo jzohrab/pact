@@ -427,19 +427,38 @@ class MainWindow:
         self._load_state_file(f)
 
 
-    def _load_state_file(self, f):
-        if f is None or f == '':
+    def _load_state_file(self, sessionfile):
+        if sessionfile is None or sessionfile == '':
             print("Cancelled")
             return
         appstate = None
 
-        self.session_file = f
         j = None
-        with open(self.session_file, "r") as src:
+        with open(sessionfile, "r") as src:
             j = json.loads(src.read())
 
         appstate = MainWindow.ApplicationState.from_dict(j)
         appstate.print()
+
+        def _is_present(fieldname, filename):
+            if filename is not None and os.path.exists(filename):
+                return True
+
+            msg = f"""Missing {fieldname}: {filename}
+
+Session file: {sessionfile}
+
+Update '{fieldname}' in the session file and try again."""
+            messagebox.showerror(title = f'Missing {fieldname}', message=msg)
+            return False
+
+        if not _is_present('music_file', appstate.music_file):
+            return
+        if appstate.transcription_file is not None and not _is_present('transcription_file', appstate.transcription_file):
+            return
+
+        self.session_file = sessionfile
+
         self._load_song_details(appstate.music_file)
         self._load_transcription(appstate.transcription_file)
         self.music_player.reposition(appstate.music_player_pos)
