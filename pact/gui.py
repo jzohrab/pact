@@ -450,7 +450,7 @@ class BookmarkWindow(object):
         # Start the clip at the bookmark value for now, good enough.
         clip_bounds = bookmark.clip_bounds_ms
         if not bookmark.clip_bounds_ms:
-            clip_bounds = (bookmark.position_ms, bookmark.position_ms)
+            clip_bounds = [ bookmark.position_ms, bookmark.position_ms ]
 
         # TODO: can likely change these to regular floats, as they're
         # not controlling anything.
@@ -766,9 +766,9 @@ class BookmarkWindow(object):
                 e != '' and
                 float(s) < float(e))
             if valid_clip:
-                self.bookmark.clip_bounds_ms = (float(s), float(e))
+                self.bookmark.clip_bounds_ms = [float(s), float(e)]
         except:
-            print(f'bad clip bounds? {(self.start_var.get(), self.end_var.get())}')
+            print(f'bad clip bounds? {[self.start_var.get(), self.end_var.get()]}')
 
 
     def save_clip(self):
