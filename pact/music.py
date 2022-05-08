@@ -227,13 +227,30 @@ class MusicPlayer:
 class Bookmark:
     """A bookmark or clip item, stored in bookmarks listbox"""
     def __init__(self, pos_ms):
-        self._pos_ms = pos_ms
-        self._clip_start_ms = None
-        self._clip_end_ms = None
+        self.position_ms = pos_ms
+        self.clip_bounds_ms = None
+        # self._clip_end_ms = None
         self.transcription = None
 
-    def clipdisplay(self):
-        s, e = (self._clip_start_ms, self._clip_end_ms)
+    def to_dict(self):
+        """For serialization"""
+        return self.__dict__
+
+    @staticmethod
+    def from_dict(d):
+        """For deserialization."""
+        # print(f'dict: {d}')
+        p = d['position_ms']
+        b = Bookmark(p)
+        b.clip_bounds_ms = d['clip_bounds_ms']
+        b.transcription = d['transcription']
+        return b
+
+    def __clipdisplay(self, clip_at):
+        b = self.clip_bounds_ms
+        if b is None:
+            return None
+        s, e = b
         if s is None or e is None:
             return None
         s = TimeUtils.time_string(s)
@@ -242,34 +259,15 @@ class Bookmark:
 
         t = self.transcription
         if t is not None and t.strip() != '':
-            clipped = t[:50]
+            clipped = t[:clip_at]
             if clipped != t:
                 clipped += ' ...'
             ret = f"{ret}  \"{clipped}\""
         return ret
 
-    def display(self):
+    def display(self, clip_at = 50):
         """String description of this for display in list boxes."""
-        cd = self.clipdisplay()
+        cd = self.__clipdisplay(clip_at)
         if cd is not None:
             return cd
-        return f"Bookmark {TimeUtils.time_string(self._pos_ms)}"
-
-    @property
-    def position_ms(self):
-        """Bookmark position."""
-        return self._pos_ms
-
-    @position_ms.setter
-    def position_ms(self, v):
-        self._pos_ms = v
-
-    @property
-    def clip_bounds_ms(self):
-        if self._clip_start_ms is None:
-            return None
-        return (self._clip_start_ms, self._clip_end_ms)
-
-    @clip_bounds_ms.setter
-    def clip_bounds_ms(self, v):
-        self._clip_start_ms, self._clip_end_ms = v
+        return f"Bookmark {TimeUtils.time_string(self.position_ms)}"
