@@ -29,21 +29,8 @@ class TimeUtils:
         return f'{ss} - {es}'
 
 
-def get_config():
-    """Return configparser.config for config.ini, or the value in PACTCONFIG env var."""
-    config = configparser.ConfigParser()
-    filename = os.environ.get('PACTCONFIG', 'config.ini')
-    if not os.path.exists(filename):
-        print(f'\nMissing required config file {filename}, quitting.\n')
-        sys.exit(1)
-    config.read(filename)
-    return config
-
-
-def lookup(selected_text):
-    config = get_config()
-    modulename = config['Pact']['LookupModule']
-    mod = import_module(modulename)
+def lookup(selected_text, lookup_module_name):
+    mod = import_module(lookup_module_name)
     lookup = getattr(mod, 'lookup')
     return lookup(selected_text)
 
@@ -102,16 +89,17 @@ def anki_tag_from_filename(f):
     return tag
 
 
-def anki_card_export(audiosegment, transcription = None, tag = None):
+def anki_card_export(
+        audiosegment,
+        ankiconfig,
+        transcription = None,
+        tag = None):
     """Export the current clip and transcription to Anki using Ankiconnect."""
-
-    config = get_config()
-    ankiconfig = config['Anki']
-    destdir = ankiconfig['MediaFolder']
 
     now = datetime.now() # current date and time
     date_time = now.strftime("%Y%m%d_%H%M%S")
     filename = f'clip_{date_time}_{id(audiosegment)}.mp3'
+    destdir = ankiconfig['MediaFolder']
     destname = os.path.join(destdir, filename)
 
     with NamedTemporaryFile(suffix='.mp3') as temp:
@@ -145,7 +133,7 @@ def anki_card_export(audiosegment, transcription = None, tag = None):
         postjson['params']['note']['tags'] = [ tag ]
 
     print(f'posting: {postjson}')
-    url = config['Anki']['Ankiconnect']
+    url = ankiconfig['Ankiconnect']
     r = requests.post(url, json = postjson)
     print(f'result: {r.json()}')
     return r

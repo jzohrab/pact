@@ -1,5 +1,6 @@
 # GUI
 
+import configparser
 import json
 import matplotlib.pyplot as plt
 import numpy as np
@@ -28,6 +29,16 @@ from pact._version import __version__
 import pact.textmatch
 
 
+class Config:
+
+    @staticmethod
+    def from_file(filename):
+        """Return configparser.config for config.ini, or the value in PACTCONFIG env var."""
+        config = configparser.ConfigParser()
+        config.read(filename)
+        return config
+
+
 class MainWindow:
 
     class FullTrackBookmark(pact.music.Bookmark):
@@ -37,11 +48,13 @@ class MainWindow:
             return "<Full Track>"
 
 
-    def __init__(self, window):
+    def __init__(self, window, config):
         window.title(f'Pact v{__version__}')
         window.geometry('600x400')
         self.window = window
         self.window.protocol('WM_DELETE_WINDOW', self.quit)
+
+        self.config = config
         self.music_file = None
         self.song_length_ms = 0
         self.transcription_file = None
@@ -139,11 +152,10 @@ class MainWindow:
 
 
     def init_dev(self):
-        config = pact.utils.get_config()
-        if not config.has_section('Dev'):
+        if not self.config.has_section('Dev'):
             return
         print('Doing dev configuration')
-        devsettings = config['Dev']
+        devsettings = self.config['Dev']
 
         f = devsettings.get('SessionFile', None)
         if f:
@@ -164,6 +176,7 @@ class MainWindow:
         self.music_player.pause()
         d = BookmarkWindow(
             parent = self.window,
+            config = self.config,
             bookmark = b,
             allbookmarks = self.bookmarks,
             music_file = self.music_file,
@@ -421,7 +434,8 @@ Update '{fieldname}' in the session file and try again."""
 class BookmarkWindow(object):
     """Bookmark / clip editing window."""
 
-    def __init__(self, parent, bookmark, allbookmarks, music_file, song_length_ms, transcription_file):
+    def __init__(self, parent, config, bookmark, allbookmarks, music_file, song_length_ms, transcription_file):
+        self.config = config
         self.bookmark = bookmark
         self.music_file = music_file
         self.song_length_ms = song_length_ms
@@ -786,8 +800,10 @@ class BookmarkWindow(object):
         if term is None or term.strip() == '':
             print('Nothing selected')
             return
-        print(f'doing lookup of "{term}"')
-        result = pact.utils.lookup(term)
+
+        module_name = self.config['Pact']['LookupModule']
+        print(f'doing lookup of "{term}" using {module_name}')
+        result = pact.utils.lookup(term, module_name)
 
         d = LookupWindow(
             parent = self.root,
@@ -809,7 +825,8 @@ class BookmarkWindow(object):
 
         tag = pact.utils.anki_tag_from_filename(self.music_file)
         r = pact.utils.anki_card_export(
-            c,
+            audiosegment = c,
+            ankiconfig = self.config['Anki'],
             transcription = self.bookmark.transcription,
             tag = tag
         )
