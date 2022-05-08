@@ -1,6 +1,6 @@
 from tkinter import Tk
-from pact import gui
+import pact.app
 
 root = Tk()
-app = gui.MainWindow(root)
+app = pact.app.MainWindow(root)
 root.mainloop()
