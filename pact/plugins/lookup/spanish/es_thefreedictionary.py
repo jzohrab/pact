@@ -112,8 +112,8 @@ def lookup(word):
         ret = d['definition']
         e = d['example']
         if e is not None and e.strip() != '':
-            ret = f'{ret}\n"{e}"'
-        return ret
+            ret = f'{ret}. "{e}"'
+        return f'* {word}: {ret}'
 
     return  '\n\n'.join([ _def_print(d) for d in data['definitions'] ])
 
