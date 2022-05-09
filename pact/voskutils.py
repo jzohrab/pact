@@ -11,88 +11,36 @@ import wave
 SetLogLevel(-1)
 
 
-class TranscriptionCallback(object):
-    """Callbacks to report on transcription status."""
-    def __init__(self): pass
-    def totalbytes(self, t): pass
-    def bytesread(self, b): pass
-    def partial_result(self, r): pass
-    def result(self, r): pass
-    def final_result(self, r): pass
-    def should_stop(self): pass
-    
+class TranscriptionCallback:
+    """Called during transcribe_wav()."""
 
-class ConsoleCallback(TranscriptionCallback):
-
-    def __init__(self):
+    def __init__(
+            self,
+            on_update_transcription = None,
+            on_update_progress = None,
+            on_finished = None
+    ):
         super()
         self._totalbytes = 100
         self._bytesread = 0
         self._pct = 0
         self._last_pct = 0
-        self.latest_result = None
 
-    def totalbytes(self, t):
-        print(f'About to read {t}')
-        self._totalbytes = t
+        # Callback when transcription is updated.
+        self.on_update_transcription = on_update_transcription
 
-    def bytesread(self, b):
-        self._bytesread += b
-        print('.', end='', flush=True)
-        self._pct = int((self._bytesread / self._totalbytes) * 100)
-        if self._pct - self._last_pct > 10:
-            self.alert_update()
-            self._last_pct = self._pct
+        # Callback when progress increases by 10%
+        self.on_update_progress = on_update_progress
 
-    def alert_update(self):
-        print()
-        print(f'{self._pct}%: {self.latest_result}')
-
-    def partial_result(self, r):
-        # print(r)
-        t = json.loads(r)
-        self.latest_result = t.get('partial')
-
-    def result(self, r):
-        # print(r)
-        t = json.loads(r)
-        self.latest_result = t.get('partial')
-
-    def final_result(self, r):
-        # print(r)
-        t = json.loads(r)
-        self.latest_result = t.get('text')
-        self.alert_update()
-
-    def should_stop(self):
-        return False
-
-
-class TextCallback(TranscriptionCallback):
-
-    def __init__(self, rootwindow, textbox, progress_bar = None):
-        super()
-        self._totalbytes = 100
-        self._bytesread = 0
-        self._pct = 0
-        self._last_pct = 0
+        # When done.
+        self.on_finished = on_finished
 
         self.current_partial_result = None
-
-        # An additional callback for this callback!
-        self.on_finished = None
 
         # Vosk returns 'partial results' as it processes, but then
         # each individual sentence (as best as Vosk can determine)
         # is returned as a 'result', or a 'final result'.
         self.sentences = []
-
-        self.transcription_textbox = textbox
-        self.progress = progress_bar
-
-        # Handle to main window to force updates.
-        # Hacky, really this should be moved to a thread or subprocess.
-        self.rootwindow = rootwindow
 
         self.should_be_stopped = False
 
@@ -102,33 +50,28 @@ class TextCallback(TranscriptionCallback):
 
     def bytesread(self, b):
         self._bytesread += b
-        print('.', end='', flush=True)
         self._pct = int((self._bytesread / self._totalbytes) * 100)
         if self._pct - self._last_pct >= 10:
             self.alert_update()
             self._last_pct = self._pct
-        if self.progress and not self.should_be_stopped:
-            self.progress['value'] = self._pct
+        if self.on_update_progress and not self.should_be_stopped:
+            self.on_update_progress(self._pct)
 
     def transcription(self):
-        tmp = self.sentences.copy()
-        if self.current_partial_result:
-            tmp.append(self.current_partial_result)
-        return '. '.join(self.sentences)
+        base = '. '.join(self.sentences)
+        all = [
+            s for s in
+            [ '. '.join(self.sentences), self.current_partial_result ]
+            if s is not None and s != ''
+        ]
+        return '. '.join(all)
 
     def alert_update(self):
         if self.should_be_stopped:
             print('stopped, no update')
             return
-
-        print()
-        print(f'{self._pct}%: {self.transcription()}')
-
-        t = self.transcription_textbox
-        t.delete(1.0, tkinter.END)  # Weird that it's 1.0 ... ref stackoverflow question 27966626.
-        t.insert(1.0, self.transcription())
-
-        self.rootwindow.update() # Update the UI, since this is blocking the main thread.
+        if self.on_update_transcription:
+            self.on_update_transcription(self.transcription())
 
     def partial_result(self, r):
         t = json.loads(r)
@@ -216,14 +159,23 @@ def transcribe_audiosegment(chunk, cb = TranscriptionCallback()):
 
 def main():
 
-    f = "samples/spanish_10_seconds.mp3"
+    if len(sys.argv) < 2:
+        print('Specify file, please.')
+        sys.exit(1)
+
+    f = sys.argv[1]
     song = AudioSegment.from_mp3(f)
     print("making chunk")
     duration = 5 * 1000  # ms
     chunk = song[:duration]
-    c = ConsoleCallback()
-    transcribe_audiosegment(chunk, c)
-    print(c.latest_result)
+
+    cb = TranscriptionCallback(
+        on_update_transcription = lambda s: print(f'Current: {s}'),
+        on_update_progress = lambda n: print(f'{n}%'),
+        on_finished = lambda s: print(f'Final: {s}')
+    )
+    transcribe_audiosegment(chunk, cb)
+
     print('done')
 
 if __name__ == "__main__":

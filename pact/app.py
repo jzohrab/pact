@@ -299,6 +299,7 @@ class MainWindow:
     def _load_song_details(self, f):
         song_mut = MP3(f)
         self.song_length_ms = song_mut.info.length * 1000  # length is in seconds
+        self.reposition(0)
         self.slider.config(to = self.song_length_ms, value=0)
         self.slider_lbl.configure(text=TimeUtils.time_string(self.song_length_ms))
 
@@ -745,27 +746,6 @@ class BookmarkWindow(object):
         self.music_player.play()
 
 
-    def __match_with_transcription_file(self, sought):
-        if self.transcription_file is None:
-            print('no transcription file, returning')
-            return None
-
-        contents = None
-        with open(self.transcription_file) as f:
-            contents = f.read()
-
-        fuzzy_text_match_accuracy = 80
-        matches = pact.textmatch.search(contents, sought, True, fuzzy_text_match_accuracy)
-        if len(matches) == 0:
-            print('no matches')
-            return None
-
-        print('got matches:')
-        print(matches)
-        result = [ pact.textmatch.ellipsify(m['match'], m['context']) for m in matches ]
-        return '\n\n'.join(result).strip()
-
-
     def transcribe(self):
         c = self.get_clip()
         if c is None:
@@ -773,19 +753,45 @@ class BookmarkWindow(object):
 
         self.stop_current_transcription()
 
-        def try_transcription_search(sought):
-            transcription_match = self.__match_with_transcription_file(sought)
-            if transcription_match is None:
-                return
+        def __set_transcription(transcription):
             t = self.transcription_textbox
             # Weird that it's 1.0 ... ref stackoverflow question 27966626.
             t.delete(1.0, END)
-            t.insert(1.0, transcription_match)
+            t.insert(1.0, transcription)
+
+        def __update_progressbar(n):
+            self.transcription_progress['value'] = n
+
+        def __match_with_transcription_file(sought):
+            contents = None
+            with open(self.transcription_file) as f:
+                contents = f.read()
+
+            fuzzy_text_match_accuracy = 80
+            matches = pact.textmatch.search(contents, sought, True, fuzzy_text_match_accuracy)
+            if len(matches) == 0:
+                print('no matches')
+                return None
+
+            print('got matches:')
+            print(matches)
+            result = [ pact.textmatch.ellipsify(m['match'], m['context']) for m in matches ]
+            return '\n\n'.join(result).strip()
+
+        def __try_transcription_search(sought):
+            if self.transcription_file is None:
+                return
+            transcription_match = __match_with_transcription_file(sought)
+            if transcription_match is None:
+                return
+            __set_transcription(transcription_match)
 
         def do_transcription():
-            cb = pact.voskutils.TextCallback(self.parent, self.transcription_textbox, self.transcription_progress)
-            if self.transcription_file is not None:
-                cb.on_finished = lambda s: try_transcription_search(s)
+            cb = pact.voskutils.TranscriptionCallback(
+                on_update_transcription = lambda s: __set_transcription(s),
+                on_update_progress = lambda n: __update_progressbar(n),
+                on_finished = lambda s: __try_transcription_search(s)
+            )
             self.transcription_callback = cb
             pact.voskutils.transcribe_audiosegment(c, cb)
 
