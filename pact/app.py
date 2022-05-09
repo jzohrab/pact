@@ -66,6 +66,9 @@ class MainWindow:
 
         self.set_title()
 
+        # popup window for editing clips, storing as member for testing.
+        self.bookmark_window = None
+
         menubar = Menu(self.window)
         self.window['menu'] = menubar
         menu_file = Menu(menubar)
@@ -139,11 +142,11 @@ class MainWindow:
         # also triggers a re-selection of the currently selected
         # bookmark.
         window.bind('<Command-p>', lambda e: self.play_pause())
-        window.bind('<Right>', lambda e: self.music_player.increment(100))
-        window.bind('<Left>', lambda e: self.music_player.increment(-100))
-        window.bind('<Command-Right>', lambda e: self.music_player.increment(1000))
-        window.bind('<Command-Left>', lambda e: self.music_player.increment(-1000))
-        window.bind('<m>', lambda e: self.add_bookmark(float(self.slider.get())))
+        window.bind('<Right>', lambda e: self.increment(100))
+        window.bind('<Left>', lambda e: self.increment(-100))
+        window.bind('<Command-Right>', lambda e: self.increment(1000))
+        window.bind('<Command-Left>', lambda e: self.increment(-1000))
+        window.bind('<m>', lambda e: self.add_bookmark())
         window.bind('<u>', lambda e: self.update_selected_bookmark(float(self.slider.get())))
         window.bind('<d>', lambda e: self.delete_selected_bookmark())
         window.bind('<Return>', lambda e: self.popup_clip_window())
@@ -174,24 +177,38 @@ class MainWindow:
         b = self.bookmarks[i]
 
         self.music_player.pause()
-        d = BookmarkWindow(
+        popup = BookmarkWindow(
             parent = self.window,
             config = self.config,
             bookmark = b,
             allbookmarks = self.bookmarks,
             music_file = self.music_file,
             song_length_ms = self.song_length_ms,
-            transcription_file = self.transcription_file
+            transcription_file = self.transcription_file,
+            on_close = lambda: self.popup_clip_window_closed(i)
         )
-        self.window.wait_window(d.root)
+        self.bookmark_window = popup
+
+        # Note: previously, this method used
+        # "self.window.wait_window(popup.root)", but this was
+        # problematic during unit testing as the code would block
+        # until the popup closed.  Using an 'on_close' callback
+        # results in the same effect (modal popup), and doesn't block
+        # the main thread.
+
+
+    def popup_clip_window_closed(self, i):
         self._save_session()
 
-        d.root.grab_release()
+        self.bookmark_window.root.grab_release()
+        self.bookmark_window = None
+
         # Re-select, b/c switching to the pop-up deselects the current.
         self.bookmarks_lst.activate(i)
         self.bookmarks_lst.select_set(i)
         self.reload_bookmark_list()
         self.bookmarks_lst.see(i)
+        b = self.bookmarks[i]
         self.move_to_bookmark(b)
 
 
@@ -259,6 +276,14 @@ class MainWindow:
 
     def move_to_bookmark(self, b):
         self.music_player.reposition(b.position_ms)
+
+
+    def reposition(self, value_ms_f):
+        """Reposition for automation."""
+        self.music_player.reposition(value_ms_f)
+
+    def increment(self, delta):
+        self.music_player.increment(delta)
 
 
     def load_mp3(self):
@@ -374,7 +399,7 @@ class MainWindow:
     def _save_session(self):
         """Save session, either explicitly from user or when any bookmark changes."""
         if self.session_file is None:
-            print('No session file, not saving.')
+            # print('No session file, not saving.')
             return
 
         appstate = MainWindow.ApplicationState.from_app(self)
@@ -434,12 +459,13 @@ Update '{fieldname}' in the session file and try again."""
 class BookmarkWindow(object):
     """Bookmark / clip editing window."""
 
-    def __init__(self, parent, config, bookmark, allbookmarks, music_file, song_length_ms, transcription_file):
+    def __init__(self, parent, config, bookmark, allbookmarks, music_file, song_length_ms, transcription_file, on_close):
         self.config = config
         self.bookmark = bookmark
         self.music_file = music_file
         self.song_length_ms = song_length_ms
         self.transcription_file = transcription_file
+        self.on_close = on_close
 
         self.parent = parent
         self.root=Toplevel(parent)
@@ -511,8 +537,8 @@ class BookmarkWindow(object):
         self.play_btn.grid(row=0, column=0, padx=2)
 
         buttons = [
-            [ 'Set start', lambda: self.start_var.set(self.slider_var.get()) ],
-            [ 'Set end', lambda: self.end_var.set(self.slider_var.get()) ],
+            [ 'Set start', self.set_clip_start ],
+            [ 'Set end', self.set_clip_end ],
             [ 'Play clip', self.play_clip ],
             [ 'Transcribe', self.transcribe ]
         ]
@@ -589,8 +615,8 @@ class BookmarkWindow(object):
         self.root.bind('<Command-Left>', lambda e: self.music_player.increment(-1000))
         self.root.bind('<Command-r>', lambda e: self.music_player.reposition(self.from_val))
 
-        self.root.bind('<Command-s>', lambda e: self.start_var.set(self.slider_var.get()))
-        self.root.bind('<Command-e>', lambda e: self.end_var.set(self.slider_var.get()))
+        self.root.bind('<Command-s>', lambda e: self.set_clip_start())
+        self.root.bind('<Command-e>', lambda e: self.set_clip_end())
         self.root.bind('<Command-Shift-s>', lambda e: self.music_player.reposition(self.start_var.get()))
         self.root.bind('<Command-Shift-e>', lambda e: self.music_player.reposition(self.end_var.get()))
 
@@ -673,6 +699,16 @@ class BookmarkWindow(object):
         return (sl_min, sl_max)
 
 
+    def reposition(self, value_ms_f):
+        """Reposition for automation."""
+        self.music_player.reposition(value_ms_f)
+
+    def set_clip_start(self):
+        self.start_var.set(self.slider_var.get())
+
+    def set_clip_end(self):
+        self.end_var.set(self.slider_var.get())
+
     def get_clip_bounds(self):
         cs = self.start_var.get()
         ce = self.end_var.get()
@@ -691,7 +727,7 @@ class BookmarkWindow(object):
     def play_clip(self):
         bounds = self.get_clip_bounds()
         if not bounds:
-            print('No clip bounds, not playing.')
+            # print('No clip bounds, not playing.')
             return
 
         txt = self.transcription_textbox.get(1.0, END)
@@ -858,6 +894,9 @@ class BookmarkWindow(object):
         self.root.grab_release()
         self.root.destroy()
 
+        # Callback.
+        self.on_close()
+
 
     def get_signal_plot_data(self, from_val, to_val):
         sound = pact.utils.audiosegment_from_mp3_time_range(self.music_file, from_val, to_val)
@@ -869,12 +908,15 @@ class BookmarkWindow(object):
         # examples about plotting .wav files,
         # e.g. https://www.geeksforgeeks.org/plotting-various-sounds-on-graphs-using-python-and-matplotlib/
         signal = None
+        f_rate = 0
         with NamedTemporaryFile("w+b", suffix=".wav") as f:
-            sound.export(f.name, format='wav')
-            raw = wave.open(f.name, "r")
-            f_rate = raw.getframerate()
-            signal = raw.readframes(-1)
-            signal = np.frombuffer(signal, dtype = 'int16')
+            exported = sound.export(f.name, format='wav')
+            exported.close()
+            with wave.open(f.name, "r") as raw:
+                f_rate = raw.getframerate()
+                signal = raw.readframes(-1)
+                signal = np.frombuffer(signal, dtype = 'int16')
+                raw.close()
 
         time = np.linspace(
             0, # start
