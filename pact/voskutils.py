@@ -45,7 +45,7 @@ class TranscriptionCallback:
         self.should_be_stopped = False
 
     def totalbytes(self, t):
-        print(f'About to read {t}')
+        # print(f'About to read {t}')
         self._totalbytes = t
 
     def bytesread(self, b):
@@ -68,7 +68,7 @@ class TranscriptionCallback:
 
     def alert_update(self):
         if self.should_be_stopped:
-            print('stopped, no update')
+            # print('stopped, no update')
             return
         if self.on_update_transcription:
             self.on_update_transcription(self.transcription())
@@ -87,8 +87,8 @@ class TranscriptionCallback:
         self.alert_update()
         if self.on_finished:
             self.on_finished(self.transcription())
-        print()
-        print('done')
+        # print()
+        # print('done')
 
     def stop(self):
         self.should_be_stopped = True

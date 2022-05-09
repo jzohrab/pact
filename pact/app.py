@@ -29,12 +29,29 @@ from pact._version import __version__
 import pact.textmatch
 
 
-class Config:
+class VoskTranscriptionStrategy:
+
+    def start_transcription(self, bookmark_window, clip, on_update_transcription, on_update_progress, on_finished):
+        cb = pact.voskutils.TranscriptionCallback(
+            on_update_transcription = on_update_transcription,
+            on_update_progress = on_update_progress,
+            on_finished = on_finished
+        )
+        bookmark_window.transcription_callback = cb
+        pact.voskutils.transcribe_audiosegment(clip, cb)
+
+
+class Config(configparser.ConfigParser):
+
+    def __init__(self):
+        super().__init__()
+        self.transcription_strategy = VoskTranscriptionStrategy()  # Default
+        """Hook point for doing different kinds of transcription, eg for testing."""
 
     @staticmethod
     def from_file(filename):
         """Return configparser.config for config.ini, or the value in PACTCONFIG env var."""
-        config = configparser.ConfigParser()
+        config = Config()
         config.read(filename)
         return config
 
@@ -786,16 +803,16 @@ class BookmarkWindow(object):
                 return
             __set_transcription(transcription_match)
 
-        def do_transcription():
-            cb = pact.voskutils.TranscriptionCallback(
+        def __do_transcription():
+            self.config.transcription_strategy.start_transcription(
+                bookmark_window = self,
+                clip = c,
                 on_update_transcription = lambda s: __set_transcription(s),
                 on_update_progress = lambda n: __update_progressbar(n),
                 on_finished = lambda s: __try_transcription_search(s)
             )
-            self.transcription_callback = cb
-            pact.voskutils.transcribe_audiosegment(c, cb)
 
-        self.transcription_thread = StoppableThread(target=do_transcription)
+        self.transcription_thread = StoppableThread(target=__do_transcription)
         self.transcription_thread.start()
 
 
