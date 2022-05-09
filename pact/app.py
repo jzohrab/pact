@@ -816,11 +816,11 @@ class BookmarkWindow(object):
             fuzzy_text_match_accuracy = 80
             matches = pact.textmatch.search(contents, sought, True, fuzzy_text_match_accuracy)
             if len(matches) == 0:
-                print('no matches')
+                cream = '#FFFDD0'
+                self.transcription_textbox.config(bg=cream)
                 return sought
 
-            print('got matches:')
-            print(matches)
+            print(f'matches: {matches}')
             result = [ pact.textmatch.ellipsify(m['match'], m['context']) for m in matches ]
             return '\n\n'.join(result).strip()
 
@@ -829,6 +829,7 @@ class BookmarkWindow(object):
             __set_transcription(sought)
 
         self.stop_current_transcription()
+        self.transcription_textbox.config(bg='white')
         self.config.transcription_strategy.start(
             clip = c,
             on_update_transcription = lambda s: __set_transcription(s),

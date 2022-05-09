@@ -242,6 +242,31 @@ Open an mp3 file and a .txt translation file, and start making bookmarks.
 
 TODO: create a YouTube video or similar to demonstrate usage.
 
+### Transcriptions
+
+pact does a first-pass transcription of clips using
+[Vosk](https://github.com/alphacep/vosk-api/tree/master/python).  It's
+surprisingly good!  Well, sometimes it's hilariously bad, but hey,
+that's software.
+
+If a transcription file has been set with `Menu > File > Open
+transcription`, pact tries to find the best match for the first pass.
+If it does, it updates the transcription to include any sentence
+beginnings and endings.
+
+For example, if the first pass returned "tengo un perro y un gato",
+and the transcription file contained "Un hombre me dijo, 'Tengo un
+perro, y un gato,' pero no entiendo porque me lo dijo.", the
+transcription would be:
+
+```
+[Un hombre me dijo,] 'Tengo un perro, y un gato,' [pero no entiendo porque me lo dijo.]
+```
+
+If pact couldn't find a good match, the transcription is left as-is,
+and the text box turns yellow.  You might want to try to find your
+sentence in the transcription manually.
+
 ### Saving
 
 `Menu > File > Save session` saves the currently loaded files (mp3 and
