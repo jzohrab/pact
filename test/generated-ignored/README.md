@@ -1,0 +1,1 @@
+Files generated during testing.  This directory is ignored.

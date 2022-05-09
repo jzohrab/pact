@@ -339,3 +339,11 @@ Are in `/test`.  Run them all with:
 ```
 python -m unittest discover -s test
 ```
+
+To run a single one matching a pattern, use `-k`:
+
+```
+python -m unittest discover -s test -k save_session
+```
+
+See `python -m unittest -h` for more flags.

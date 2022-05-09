@@ -29,24 +29,16 @@ from pact._version import __version__
 import pact.textmatch
 
 
-class VoskTranscriptionStrategy:
-
-    def start_transcription(self, bookmark_window, clip, on_update_transcription, on_update_progress, on_finished):
-        cb = pact.voskutils.TranscriptionCallback(
-            on_update_transcription = on_update_transcription,
-            on_update_progress = on_update_progress,
-            on_finished = on_finished
-        )
-        bookmark_window.transcription_callback = cb
-        pact.voskutils.transcribe_audiosegment(clip, cb)
-
-
 class Config(configparser.ConfigParser):
 
     def __init__(self):
         super().__init__()
+
+        # Hook point for doing different kinds of transcription, eg for testing.
         self.transcription_strategy = VoskTranscriptionStrategy()  # Default
-        """Hook point for doing different kinds of transcription, eg for testing."""
+
+        # Auto-save the session .pact file when a bookmark changes.
+        self.autosave = True
 
     @staticmethod
     def from_file(filename):
@@ -180,6 +172,10 @@ class MainWindow:
         f = devsettings.get('SessionFile', None)
         if f:
             self._load_state_file(f)
+
+            i = devsettings.get('LoadBookmark', None)
+            if i and i != 0:
+                self.popup_clip_window(int(i))
             return
 
         f = devsettings.get('LoadFile', None)
@@ -187,9 +183,11 @@ class MainWindow:
             self._load_song_details(f)
             return
 
-    def popup_clip_window(self):
-        i = self._selected_bookmark_index()
-        if not i:
+    def popup_clip_window(self, bookmark_index = None):
+        i = bookmark_index
+        if i is None:
+            i = self._selected_bookmark_index()
+        if i is None or i == 0:
             return
         b = self.bookmarks[i]
 
@@ -416,6 +414,10 @@ class MainWindow:
 
     def _save_session(self):
         """Save session, either explicitly from user or when any bookmark changes."""
+
+        if not self.config.autosave:
+            return
+
         if self.session_file is None:
             # print('No session file, not saving.')
             return
@@ -474,6 +476,36 @@ Update '{fieldname}' in the session file and try again."""
         self.reload_bookmark_list()
 
 
+class VoskTranscriptionStrategy:
+    """Default strategy used by the BookmarkWindow."""
+
+    def __init__(self):
+        self.callback = None
+        self.transcription_thread = None
+
+
+    def start(self, clip, on_update_transcription, on_update_progress, on_finished):
+        self.callback = pact.voskutils.TranscriptionCallback(
+            on_update_transcription = on_update_transcription,
+            on_update_progress = on_update_progress,
+            on_finished = on_finished
+        )
+
+        def __do_transcription():
+            pact.voskutils.transcribe_audiosegment(clip, self.callback)
+
+        self.transcription_thread = StoppableThread(target=__do_transcription)
+        self.transcription_thread.setDaemon(True)
+        self.transcription_thread.start()
+
+
+    def stop(self):
+        if not self.transcription_thread:
+            return
+        self.callback.stop()
+        self.transcription_thread.stop()
+
+
 class BookmarkWindow(object):
     """Bookmark / clip editing window."""
 
@@ -495,10 +527,6 @@ class BookmarkWindow(object):
 
         # Pre-calc graphing data.  If from_val or to_val change, must recalc.
         self.signal_plot_data = self.get_signal_plot_data(self.from_val, self.to_val)
-
-        # Transcription happens on a thread and can be stopped.
-        self.transcription_thread = None
-        self.transcription_callback = None
 
         # Start the clip at the bookmark value for now, good enough.
         clip_bounds = bookmark.clip_bounds_ms
@@ -768,8 +796,6 @@ class BookmarkWindow(object):
         if c is None:
             return
 
-        self.stop_current_transcription()
-
         def __set_transcription(transcription):
             t = self.transcription_textbox
             # Weird that it's 1.0 ... ref stackoverflow question 27966626.
@@ -779,16 +805,19 @@ class BookmarkWindow(object):
         def __update_progressbar(n):
             self.transcription_progress['value'] = n
 
-        def __match_with_transcription_file(sought):
+        def __search_transcription(sought, transcription_file):
+            if transcription_file is None:
+                return sought
+
             contents = None
-            with open(self.transcription_file) as f:
+            with open(transcription_file) as f:
                 contents = f.read()
 
             fuzzy_text_match_accuracy = 80
             matches = pact.textmatch.search(contents, sought, True, fuzzy_text_match_accuracy)
             if len(matches) == 0:
                 print('no matches')
-                return None
+                return sought
 
             print('got matches:')
             print(matches)
@@ -796,31 +825,20 @@ class BookmarkWindow(object):
             return '\n\n'.join(result).strip()
 
         def __try_transcription_search(sought):
-            if self.transcription_file is None:
-                return
-            transcription_match = __match_with_transcription_file(sought)
-            if transcription_match is None:
-                return
-            __set_transcription(transcription_match)
+            sought = __search_transcription(sought, self.transcription_file)
+            __set_transcription(sought)
 
-        def __do_transcription():
-            self.config.transcription_strategy.start_transcription(
-                bookmark_window = self,
-                clip = c,
-                on_update_transcription = lambda s: __set_transcription(s),
-                on_update_progress = lambda n: __update_progressbar(n),
-                on_finished = lambda s: __try_transcription_search(s)
-            )
-
-        self.transcription_thread = StoppableThread(target=__do_transcription)
-        self.transcription_thread.start()
+        self.stop_current_transcription()
+        self.config.transcription_strategy.start(
+            clip = c,
+            on_update_transcription = lambda s: __set_transcription(s),
+            on_update_progress = lambda n: __update_progressbar(n),
+            on_finished = lambda s: __try_transcription_search(s)
+        )
 
 
     def stop_current_transcription(self):
-        if not self.transcription_thread:
-            return
-        self.transcription_callback.stop()
-        self.transcription_thread.stop()
+        self.config.transcription_strategy.stop()
 
 
     def set_clip_bounds(self):
@@ -843,7 +861,7 @@ class BookmarkWindow(object):
         self.bookmark.position_ms = float(self.entry_var.get())
         txt = self.transcription_textbox.get(1.0, END)
         if txt is not None and txt != '':
-            self.bookmark.transcription = txt
+            self.bookmark.transcription = txt.strip()
         else:
             self.bookmark.transcription = None
         self.set_clip_bounds()

@@ -11,6 +11,8 @@ samples/
 
 myplugins/
 
+test/generated-ignored/
+
 ############
 
 # Byte-compiled / optimized / DLL files

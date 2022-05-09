@@ -1,11 +1,12 @@
 # TODO list
 
-## MVP TODO
+## TODOs ("MVP" = min work before posting)
 
-* change version
-* record simple YouTube video of usage, update link in README.
-* fix TODOs in README.md
-* fresh checkout, install, build from scratch in new venv, before posting anywhere
+* MVP: change version
+* MVP: record simple YouTube video of usage, update link in README.
+* MVP: fix TODOs in README.md
+* MVP: fresh checkout, install, build from scratch in new venv, run all tests, before posting anywhere
+* additional smoke test coverage (ref `test/test_app.py` comments)
 
 ## Possible future TODOs
 
