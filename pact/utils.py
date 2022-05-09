@@ -115,7 +115,7 @@ def anki_card_export(
     }
 
     if transcription is not None and transcription != '':
-        fields[ ankiconfig['TranscriptionField'] ] = transcription
+        fields[ ankiconfig['TranscriptionField'] ] = transcription.strip().replace("\n", '<br>')
 
     postjson = {
         "action": "addNote",
