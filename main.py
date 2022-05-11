@@ -1,7 +1,7 @@
 import os
 from tkinter import Tk
 import pact.app
-
+import sys
 
 def get_config():
     filename = os.environ.get('PACTCONFIG', 'config.ini')
