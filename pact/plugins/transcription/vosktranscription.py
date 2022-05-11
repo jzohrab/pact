@@ -6,6 +6,7 @@ import json
 import os
 import sys
 import tkinter
+import threading
 import wave
 
 SetLogLevel(-1)
@@ -98,15 +99,10 @@ class TranscriptionCallback:
 
 
 
-def transcribe_wav(f, callback):
-    """Transcrabe a .wav file, calling back to provide updates.
+def transcribe_wav(f, model, callback):
+    """Transcrabe a .wav file using the given vosk model, calling back to provide updates.
     ref https://github.com/alphacep/vosk-api/blob/master/python/example/test_simple.py
     """
-
-    # Precondition for vosk.
-    if not os.path.exists("model"):
-        msg = "Missing vosk model directory, download from https://alphacephei.com/vosk/models and unpack as 'model' in the current folder."
-        raise RuntimeError(msg)
 
     wf = wave.open(f, "rb")
     # print(f"channels: {wf.getnchannels()}")
@@ -117,7 +113,6 @@ def transcribe_wav(f, callback):
         wf.close()
         exit (1)
 
-    model = Model("model")
     rec = KaldiRecognizer(model, wf.getframerate())
     rec.SetWords(True)
     # rec.SetPartialWords(True)
@@ -142,7 +137,8 @@ def transcribe_wav(f, callback):
         callback.final_result(rec.FinalResult())
 
 
-def transcribe_audiosegment(chunk, cb = TranscriptionCallback()):
+def transcribe_audiosegment(chunk, model, cb = TranscriptionCallback()):
+    """Transcrabe an audiosegment using the given vosk model, calling back to provide updates."""
     # Per https://github.com/jiaaro/pydub/blob/master/pydub/playback.py,
     # playback falls back to ffplay, so we'll assume that's what's being used.
     # In this case, pydub actually dumps content to a temp .wav file, and
@@ -151,7 +147,57 @@ def transcribe_audiosegment(chunk, cb = TranscriptionCallback()):
     chunk = chunk.set_channels(1)
     with NamedTemporaryFile("w+b", suffix=".wav") as f:
         chunk.export(f.name, format='wav')
-        transcribe_wav(f.name, cb)
+        transcribe_wav(f.name, model, cb)
+
+
+class VoskTranscriptionStrategy:
+    """Default strategy used by the BookmarkWindow."""
+
+    # From https://stackoverflow.com/questions/323972/is-there-any-way-to-kill-a-thread/
+    class StoppableThread(threading.Thread):
+        """Thread class with a stop() method. The thread itself has to check
+        regularly for the stopped() condition."""
+        def __init__(self,  *args, **kwargs):
+            super(VoskTranscriptionStrategy.StoppableThread, self).__init__(*args, **kwargs)
+            self._stop_event = threading.Event()
+
+        def stop(self):
+            self._stop_event.set()
+
+        def stopped(self):
+            return self._stop_event.is_set()
+
+
+    def __init__(self, model_dir):
+        if not os.path.exists(model_dir):
+            msg = f"Missing vosk model directory {model_dir}."
+            raise RuntimeError(msg)
+
+        self.callback = None
+        self.transcription_thread = None
+        self.model_dir = model_dir
+
+    def start(self, audiosegment, on_update_transcription, on_update_progress, on_finished):
+        self.callback = TranscriptionCallback(
+            on_update_transcription = on_update_transcription,
+            on_update_progress = on_update_progress,
+            on_finished = on_finished
+        )
+
+        def __do_transcription():
+            model = Model(self.model_dir)
+            transcribe_audiosegment(audiosegment, model, self.callback)
+
+        self.transcription_thread = VoskTranscriptionStrategy.StoppableThread(target=__do_transcription)
+        self.transcription_thread.setDaemon(True)
+        self.transcription_thread.start()
+
+
+    def stop(self):
+        if not self.transcription_thread:
+            return
+        self.callback.stop()
+        self.transcription_thread.stop()
 
 
 #############################
@@ -159,22 +205,28 @@ def transcribe_audiosegment(chunk, cb = TranscriptionCallback()):
 
 def main():
 
-    if len(sys.argv) < 2:
-        print('Specify file, please.')
+    if len(sys.argv) < 3:
+        print('Please Specify mp3 file and vosk model directory')
+        print(f'e.g., "python {os.path.basename(__file__)} path/to/file.mp3 path/to/vosk/model"')
         sys.exit(1)
 
-    f = sys.argv[1]
-    song = AudioSegment.from_mp3(f)
+    filename = sys.argv[1]
+    modelname = sys.argv[2]
+
+    v = VoskTranscriptionStrategy(modelname)
+
+    song = AudioSegment.from_mp3(filename)
     print("making chunk")
     duration = 5 * 1000  # ms
     chunk = song[:duration]
 
-    cb = TranscriptionCallback(
+    v.start(
+        song,
         on_update_transcription = lambda s: print(f'Current: {s}'),
         on_update_progress = lambda n: print(f'{n}%'),
         on_finished = lambda s: print(f'Final: {s}')
     )
-    transcribe_audiosegment(chunk, cb)
+    v.transcription_thread.join()
 
     print('done')
 

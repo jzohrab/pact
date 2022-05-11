@@ -1,19 +1,25 @@
-# Config
-*.ini
+##########################
+# Pact ignores.
 
-# Ignores for vosk:
+# Configs
+*.ini
+*.ini.bkp
+
+# Ignores for vosk, assuming it's in model
 *.zip
 model/
 
 bin/
 
+# User stuff.
 samples/
-
 myplugins/
 
+# Some tests generate artifacts.
 test/generated-ignored/
 
-############
+##########################
+# Standard python ignores.
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

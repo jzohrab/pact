@@ -4,6 +4,10 @@
 # What code module you want to use for doing clip transcription text lookups.
 LookupModule = pact.plugins.lookup.sample
 
+# Location of downloaded Vosk model
+# e.g. "VoskModel = model/spanish"
+VoskModel = 
+
 [Anki]
 Ankiconnect = http://localhost:8765/
 

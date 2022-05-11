@@ -48,7 +48,7 @@ class TKinterTestCase(unittest.TestCase):
 class TestApp_move_slider_hotkeys(TKinterTestCase):
 
     def test_move_slider_hotkeys(self):
-        self.app._load_song_details('test/assets/spanish_10_seconds.mp3')
+        self.app.load_mp3('test/assets/spanish_10_seconds.mp3')
         self.pump_events()
 
         def _assert_slider_details(expected_lbl_text, expected_slider_pos):
@@ -74,7 +74,7 @@ class TestApp_move_slider_hotkeys(TKinterTestCase):
 class TestApp_add_bookmarks(TKinterTestCase):
 
     def test_load_file_add_bookmark(self):
-        self.app._load_song_details('test/assets/spanish_10_seconds.mp3')
+        self.app.load_mp3('test/assets/spanish_10_seconds.mp3')
         self.pump_events()
         # time.sleep(1)
         self.assertEqual(len(self.app.bookmarks), 1, 'one entry, the song itself')
@@ -94,7 +94,7 @@ class TestApp_add_bookmarks(TKinterTestCase):
 class TestApp_clip_window(TKinterTestCase):
 
     def test_open_clip_window_for_bookmark(self):
-        self.app._load_song_details('test/assets/spanish_10_seconds.mp3')
+        self.app.load_mp3('test/assets/spanish_10_seconds.mp3')
         self.pump_events()
 
         sliderpos = 5600
@@ -131,7 +131,7 @@ class TestApp_clip_window(TKinterTestCase):
 
 
     def test_setting_clip_start_and_end_in_popup_changes_bookmark(self):
-        self.app._load_song_details('test/assets/spanish_10_seconds.mp3')
+        self.app.load_mp3('test/assets/spanish_10_seconds.mp3')
         self.pump_events()
 
         sliderpos = 5600
@@ -171,7 +171,7 @@ class TestApp_clip_window(TKinterTestCase):
 class TestApp_transcription(TKinterTestCase):
 
     def test_transcribe_with_transcription_correction(self):
-        self.app._load_song_details('test/assets/spanish_10_seconds.mp3')
+        self.app.load_mp3('test/assets/spanish_10_seconds.mp3')
         self.app._load_transcription('test/assets/fake-transcription.txt')
         self.pump_events()
 
@@ -203,7 +203,7 @@ class TestApp_transcription(TKinterTestCase):
         self.pump_events()
 
         class FakeTranscriptionStrategy:
-            def start(self, clip, on_update_transcription, on_update_progress, on_finished):
+            def start(self, audiosegment, on_update_transcription, on_update_progress, on_finished):
                 on_update_progress(42)
                 on_finished('un perro')
             def stop(self):
@@ -232,7 +232,7 @@ class TestApp_session_files(TKinterTestCase):
         if os.path.exists(session_file):
             os.remove(session_file)
 
-        self.app._load_song_details('test/assets/spanish_10_seconds.mp3')
+        self.app.load_mp3('test/assets/spanish_10_seconds.mp3')
         self.app._load_transcription('test/assets/fake-transcription.txt')
         self.pump_events()
 

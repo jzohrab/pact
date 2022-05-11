@@ -20,13 +20,13 @@ from tkinter import filedialog
 import tkinter.scrolledtext as scrolledtext
 from tkinter import messagebox
 
-import pact.voskutils
 import pact.music
 import pact.utils
 import pact.widgets
-from pact.utils import TimeUtils, StoppableThread
+from pact.utils import TimeUtils
 from pact._version import __version__
 import pact.textmatch
+from pact.plugins.transcription import vosktranscription, unknown
 
 
 class Config(configparser.ConfigParser):
@@ -35,7 +35,7 @@ class Config(configparser.ConfigParser):
         super().__init__()
 
         # Hook point for doing different kinds of transcription, eg for testing.
-        self.transcription_strategy = VoskTranscriptionStrategy()  # Default
+        self.transcription_strategy = None
 
         # Auto-save the session .pact file when a bookmark changes.
         self.autosave = True
@@ -45,6 +45,15 @@ class Config(configparser.ConfigParser):
         """Return configparser.config for config.ini, or the value in PACTCONFIG env var."""
         config = Config()
         config.read(filename)
+
+        ts = unknown.NeedsConfiguration()
+        voskmodel = config['Pact'].get('VoskModel', '')
+        # print(f'got vosk model = {voskmodel}')
+        if voskmodel != '':
+            ts = vosktranscription.VoskTranscriptionStrategy(voskmodel)
+        config.transcription_strategy = ts
+        
+        os.environ['PACT.Vosk.Model'] = 'DUMMY_HERE'
         return config
 
 
@@ -82,7 +91,7 @@ class MainWindow:
         self.window['menu'] = menubar
         menu_file = Menu(menubar)
         menubar.add_cascade(menu=menu_file, label='File')
-        menu_file.add_command(label='Open mp3', command=self.load_mp3)
+        menu_file.add_command(label='Open mp3', command=self.menu_load_mp3)
         menu_file.add_command(label='Open transcription', command=self.load_transcription)
         menu_file.add_separator()
         menu_file.add_command(label='Open session', command=self.load_app_state)
@@ -180,7 +189,7 @@ class MainWindow:
 
         f = devsettings.get('LoadFile', None)
         if f:
-            self._load_song_details(f)
+            self.load_mp3(f)
             return
 
     def popup_clip_window(self, bookmark_index = None):
@@ -301,17 +310,17 @@ class MainWindow:
         self.music_player.increment(delta)
 
 
-    def load_mp3(self):
+    def menu_load_mp3(self):
         f = filedialog.askopenfilename(filetypes = (("mp3", "*.mp3"),))
         if f:
             # No longer using existing session.
             self.session_file = None
-            self._load_song_details(f)
+            self.load_mp3(f)
         else:
             print("no file?")
 
 
-    def _load_song_details(self, f):
+    def load_mp3(self, f):
         song_mut = MP3(f)
         self.song_length_ms = song_mut.info.length * 1000  # length is in seconds
         self.reposition(0)
@@ -465,7 +474,7 @@ Update '{fieldname}' in the session file and try again."""
 
         self.session_file = sessionfile
 
-        self._load_song_details(appstate.music_file)
+        self.load_mp3(appstate.music_file)
         self._load_transcription(appstate.transcription_file)
         self.music_player.reposition(appstate.music_player_pos)
         self.bookmarks = appstate.bookmarks
@@ -474,36 +483,6 @@ Update '{fieldname}' in the session file and try again."""
         self.bookmarks[0] = MainWindow.FullTrackBookmark()
 
         self.reload_bookmark_list()
-
-
-class VoskTranscriptionStrategy:
-    """Default strategy used by the BookmarkWindow."""
-
-    def __init__(self):
-        self.callback = None
-        self.transcription_thread = None
-
-
-    def start(self, clip, on_update_transcription, on_update_progress, on_finished):
-        self.callback = pact.voskutils.TranscriptionCallback(
-            on_update_transcription = on_update_transcription,
-            on_update_progress = on_update_progress,
-            on_finished = on_finished
-        )
-
-        def __do_transcription():
-            pact.voskutils.transcribe_audiosegment(clip, self.callback)
-
-        self.transcription_thread = StoppableThread(target=__do_transcription)
-        self.transcription_thread.setDaemon(True)
-        self.transcription_thread.start()
-
-
-    def stop(self):
-        if not self.transcription_thread:
-            return
-        self.callback.stop()
-        self.transcription_thread.stop()
 
 
 class BookmarkWindow(object):
@@ -831,7 +810,7 @@ class BookmarkWindow(object):
         self.stop_current_transcription()
         self.transcription_textbox.config(bg='white')
         self.config.transcription_strategy.start(
-            clip = c,
+            audiosegment = c,
             on_update_transcription = lambda s: __set_transcription(s),
             on_update_progress = lambda n: __update_progressbar(n),
             on_finished = lambda s: __try_transcription_search(s)
@@ -902,18 +881,16 @@ class BookmarkWindow(object):
             return
 
         tag = pact.utils.anki_tag_from_filename(self.music_file)
-        r = pact.utils.anki_card_export(
-            audiosegment = c,
-            ankiconfig = self.config['Anki'],
-            transcription = self.bookmark.transcription,
-            tag = tag
-        )
-        e = r.json()['error']
-        if e is not None:
-            msg = f'Message from Anki/Ankiconnect: {e}'
-            messagebox.showerror(title='Anki export failed', message=msg)
-        else:
+        try:
+            r = pact.utils.anki_card_export(
+                audiosegment = c,
+                ankiconfig = self.config['Anki'],
+                transcription = self.bookmark.transcription,
+                tag = tag
+            )
             self.ok()
+        except Exception as e:
+            messagebox.showerror(title='Anki export failed', message=e)
 
 
     def play_pause(self):

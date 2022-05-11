@@ -1,13 +1,13 @@
 from datetime import datetime
 from tempfile import NamedTemporaryFile
 import configparser
+import json
 import os
 import sys
 import requests
 import shutil
 import ffmpeg
 import pydub
-import threading
 from importlib import import_module
 
 
@@ -33,21 +33,6 @@ def lookup(selected_text, lookup_module_name):
     mod = import_module(lookup_module_name)
     lookup = getattr(mod, 'lookup')
     return lookup(selected_text)
-
-
-# From https://stackoverflow.com/questions/323972/is-there-any-way-to-kill-a-thread/
-class StoppableThread(threading.Thread):
-    """Thread class with a stop() method. The thread itself has to check
-    regularly for the stopped() condition."""
-    def __init__(self,  *args, **kwargs):
-        super(StoppableThread, self).__init__(*args, **kwargs)
-        self._stop_event = threading.Event()
-
-    def stop(self):
-        self._stop_event.set()
-
-    def stopped(self):
-        return self._stop_event.is_set()
 
 
 def audiosegment_from_mp3_time_range(path_to_mp3, starttime_ms, endtime_ms):
@@ -136,4 +121,9 @@ def anki_card_export(
     url = ankiconfig['Ankiconnect']
     r = requests.post(url, json = postjson)
     print(f'result: {r.json()}')
+
+    e = r.json()['error']
+    if e is not None:
+        raise RuntimeError(e)
+
     return r
