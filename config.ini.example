@@ -2,7 +2,7 @@
 
 [Pact]
 # What code module you want to use for doing clip transcription text lookups.
-LookupModule = pact.plugins.lookup.spanish.es_thefreedictionary
+LookupModule = pact.plugins.lookup.sample
 
 [Anki]
 Ankiconnect = http://localhost:8765/
@@ -11,10 +11,10 @@ Ankiconnect = http://localhost:8765/
 MediaFolder = /path/to/Anki2/User 1/collection.media/
 
 # Where the exported cards should go.
-Deck = Spanish::03_Spanish_audio
+Deck = Parent-Deck::Child-Deck
 
 # The note type for the exported cards, and the fields to use for the
 # audio clip and for the transcription.
-NoteType = Audio_clip
+NoteType = AudioClip
 AudioField = Audio
 TranscriptionField = Text

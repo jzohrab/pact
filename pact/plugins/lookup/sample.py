@@ -2,18 +2,14 @@
 """
 
 def lookup(term = 'example'):
-    result = f"""Results of looking up {term}:
+    return f"""DEMONSTRATION ONLY.
 
-1. definition
-example
+This is a sample lookup implementation, in
+pact/plugins/lookup/sample.py.
 
-2. definition
-example
+Change the lookup module by updating config.ini,
+[Pact][LookupModule]."""
 
-Note: the plugin can return results however it wants, it's just shown
-in a tkinter text widget."""
-
-    return result
 
 if __name__ == '__main__':
     print(lookup('something'))
