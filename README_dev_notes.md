@@ -61,3 +61,19 @@ work ... the spanslider couldn't be selected.  Perhaps this is due to
 grid being used, rather than pack ... not sure, didn't bother looking
 further.
 
+## VLC vs Pygame
+
+Originally in this project, mp3 playback was handled by pygame, but I
+had problems with pygame not having accurate time when it comes to
+mp3s.  Per
+https://www.pygame.org/docs/ref/music.html#pygame.mixer.music.play :
+
+> "For MP3 files the start time position selected may not be accurate
+  as things like variable bit rate encoding and ID3 tags can throw off
+  the timing calculations."
+
+This time skew was very pronounced in some files.
+
+To swap out pygame, I used a wrapper and substituted the VlcPlayer
+wrapper in its place, which still exists in the code (even though that
+wrapper might not really be necessary now).
