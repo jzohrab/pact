@@ -4,7 +4,7 @@ Summary: this lets you quickly extract audio clips from .mp3 files
 (from podcasts, etc) with a transcription, and export it to Anki using
 Ankiconnect.
 
-mp3 playing and hacking is done using ffmpeg.
+mp3 playing and hacking is done using VLC and ffmpeg.
 
 The transcription is done using
 [Vosk](https://github.com/alphacep/vosk-api/tree/master/python).
@@ -17,6 +17,10 @@ transcription is a bit off.
 **NOTE: I've only run this (and tested it) on Mac ... I'm not sure how
 it will behave on other OS's.**
 
+## A quick demo
+
+* TODO - YouTube video here
+* TODO YouTube video in Pact wiki
 
 ## Installation
 
