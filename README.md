@@ -239,7 +239,10 @@ LoadFile = /path/to/file.mp3
 Are in `/test`.  Run them all with:
 
 ```
+python3 -m venv .venv
+source .venv/bin/activate
 python -m unittest discover -s test
+deactivate
 ```
 
 To run a single one matching a pattern, use `-k`:
