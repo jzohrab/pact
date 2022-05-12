@@ -1,4 +1,4 @@
-"""Monolingual definitions and examples from es_thefreedictionary.es"""
+"""Monolingual definitions and examples from fr.thefreedictionary.es"""
 
 import os
 import inspect
@@ -15,9 +15,10 @@ import utils
 def lookup(word):
 
     d = utils.TheFreeDictionary(
-        url = 'https://es.thefreedictionary.com',
-        include_section_data_src = [ 'Larousse_GDLE' ],
+        url = 'https://fr.thefreedictionary.com',
+        include_section_data_src = [ 'larousse_pocket' ],
         root_tag = 'h2',
+        exclude = [ 'div.idmseg' ],
         include = [ 'div.ds-single', 'div.ds-list' ]
     )
 

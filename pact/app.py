@@ -860,7 +860,11 @@ class BookmarkWindow(object):
 
         module_name = self.config['Pact']['LookupModule']
         print(f'doing lookup of "{term}" using {module_name}')
-        result = pact.utils.lookup(term, module_name)
+        result = ''
+        try:
+            result = pact.utils.lookup(term, module_name)
+        except Exception as err:
+            result = f'Error during lookup: {err}'
 
         d = LookupWindow(
             parent = self.root,

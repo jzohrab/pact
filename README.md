@@ -171,11 +171,10 @@ Edit `config.ini` to match your setup.
 
 ### Lookup plugins
 
-> Note: I've only used Pact for Spanish, and so have only written a
-  lookup module for monolingual Spanish lookups (in
-  `./pact/plugins/lookup/spanish/es_thefreedictionary.py`), but one
-  with Python coding experience should be able to implement other
-  dictionary web lookups.
+> Note: I've only used Pact for Spanish, but there are monolingual
+  lookup modules for French and German as well, in
+  ./pact/plugins/lookup/`.  One with Python coding experience
+  should be able to implement other dictionary web lookups.
 
 While I haven't needed it myself, Pact _should_ allow for simple
 plugins for lookups.  See ./pact/plugins/lookup/README.md.
