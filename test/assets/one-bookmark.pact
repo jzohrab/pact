@@ -1,5 +1,5 @@
 {
-  "music_file": "test/assets/spanish_10_seconds.mp3",
+  "music_file": "test/assets/testing.mp3",
   "transcription_file": "test/assets/fake-transcription.txt",
   "music_player_pos": 5600,
   "bookmarks": [
