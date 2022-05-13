@@ -25,5 +25,5 @@ config = get_config()
 
 root = Tk()
 app = pact.app.MainWindow(root, config)
-app.load_mp3("demo/Python audio clip tool.mp3")
+app.load_mp3("pact/assets/Python audio clip tool.mp3")
 root.mainloop()
