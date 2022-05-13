@@ -222,7 +222,7 @@ class TestApp_transcription(TKinterTestCase):
         self.pump_events()
 
         b = self.app.bookmarks[1]
-        self.assertEqual(b.transcription, '[Tengo] un perro, [es muy guapo.]')
+        self.assertEqual(b.transcription, '[Tengo] ... un perro, ... [es muy guapo.]')
 
 
 class TestApp_session_files(TKinterTestCase):

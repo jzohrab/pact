@@ -285,15 +285,15 @@ class TestMatcher_ellipsify(unittest.TestCase):
 
     def test_ellipsify(self):
         cases = [
-            [ "bear", "apple bear cat", "[apple] bear [cat]" ],
-            [ "bear", "apple bear", "[apple] bear" ],
-            [ "bear", "apple bear   ", "[apple] bear" ],
-            [ "bear", "    apple bear", "[apple] bear" ],
-            [ "bear", "bear cat", "bear [cat]" ],
-            [ "bear", "bear cat   ", "bear [cat]" ],
+            [ "bear", "apple bear cat", "[apple] ... bear ... [cat]" ],
+            [ "bear", "apple bear", "[apple] ... bear" ],
+            [ "bear", "apple bear   ", "[apple] ... bear" ],
+            [ "bear", "    apple bear", "[apple] ... bear" ],
+            [ "bear", "bear cat", "bear ... [cat]" ],
+            [ "bear", "bear cat   ", "bear ... [cat]" ],
 
             # Partials
-            [ "be", "apple bear", "[apple] be[ar]" ],
+            [ "be", "apple bear", "[apple] ... be[ar]" ],
             [ "be", "applebee's", "[apple]be[e's]" ],
 
             # No match = leave as-is

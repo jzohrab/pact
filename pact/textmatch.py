@@ -218,11 +218,11 @@ def ellipsify(partial, fulltext):
     if left != '':
         left = f'[{left}]'
         if fulltext[pos - 1] == ' ':
-            left += ' '
+            left += ' ... '
     right = fulltext[pos + len(partial):].strip()
     if right != '':
         right = f'[{right}]'
         if fulltext[pos + len(partial)] == ' ':
-            right = f' {right}'
+            right = f' ... {right}'
 
     return f'{left}{partial}{right}'
