@@ -81,7 +81,9 @@ class TheFreeDictionary:
 
     def get_soup(self, word):
         query_url = f"{self.url}/{word}"
+        # print(f'Doing lookup at url: {query_url}')
         raw = get(query_url).content.decode('utf-8')
+        # print(raw)
 
         # During dev, save to and then read from a file,
         # saves time.

@@ -1,4 +1,10 @@
-"""Monolingual definitions and examples from fr.thefreedictionary.es"""
+"""Monolingual definitions and examples from de.thefreedictionary.es
+
+The base class implementation isn't the best for the german page
+... we have to include a simple 'div' in the "include" list, because
+some terms (like "Spass") don't use any classes for their divs at all.
+This results in lots of divs showing up on the lookup.  Ah well.
+"""
 
 import os
 import inspect
@@ -18,8 +24,8 @@ def lookup(word):
         url = 'https://de.thefreedictionary.com',
         include_section_data_src = [ 'pons' ],
         root_tag = 'h2',
-        # exclude = [ 'div.idmseg' ],
-        include = [ 'div.runseg' ]
+        exclude = [ 'div.cprh' ],
+        include = [ 'div.runseg', 'div' ]
     )
 
     return d.lookup(word)

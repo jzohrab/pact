@@ -139,6 +139,18 @@ README.md  # (this file)
 ...
 ```
 
+Note that some models are very large, and could be slow on your
+system.  For example, the German model `vosk-model-de-0.21` is about 2
+gigs.  When I used it on a brief German clip, the transcription was
+accurate, but the loading was so slow as to be almost unusable.  With
+the much smaller `vosk-model-small-de-0.15` (45 MB), the Vosk
+transcription was still accurate enough to find the correct match in
+the accompanying transcription.
+
+_NB: Pact currently reloads the entire Vosk model on every
+transcription; perhaps this could be convered to a one-time load.
+This would only be useful for very large models._
+
 #### Ankiconnect
 
 This is an add-on for Anki.  See
