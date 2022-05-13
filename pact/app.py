@@ -88,6 +88,7 @@ class MainWindow:
         self.bookmark_window = None
 
         menubar = Menu(self.window)
+        self.menubar = menubar
         self.window['menu'] = menubar
         menu_file = Menu(menubar)
         menubar.add_cascade(menu=menu_file, label='File')
@@ -201,6 +202,7 @@ class MainWindow:
         b = self.bookmarks[i]
 
         self.music_player.pause()
+        self.menubar.entryconfig(1, state = 'disabled')
         popup = BookmarkWindow(
             parent = self.window,
             config = self.config,
@@ -227,6 +229,7 @@ class MainWindow:
         self.bookmark_window.root.grab_release()
         self.bookmark_window = None
 
+        self.menubar.entryconfig(1, state = 'normal')
         # Re-select, b/c switching to the pop-up deselects the current.
         self.bookmarks_lst.activate(i)
         self.bookmarks_lst.select_set(i)
