@@ -269,6 +269,4 @@ See `python -m unittest -h` for more flags.
 * push to your fork
 * open a PR
 
-### TODOs
-
-See `docs/todo.md` and `docs/dev_notes.md`.
+For some ideas of stuff that might need work, see the [wiki](https://github.com/jzohrab/pact/wiki/).
