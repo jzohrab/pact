@@ -1,24 +1,31 @@
 # TODO list
 
-## TODOs ("MVP" = min work before posting)
+## Most important ... -ish.
 
-* MVP: change version
-* MVP: record simple YouTube video of usage, update link in README.
-* MVP: fix TODOs in README.md
-* MVP: fresh checkout, install, build from scratch in new venv, run all tests, before posting anywhere
+* any obvious bugfixes
+
 * additional smoke test coverage (ref `test/test_app.py` comments)
 
-## Possible future TODOs
+* whatever fixes/changes are needed for Pact to work on other OSs
 
-* packaging to release as application?
+* perhaps related to fixes for OS's: the hotkeys in app.py are very
+  Mac-specific.  It would be simple to create a "hotkeys.ini" config
+  file, read at startup, that the user can edit to change their hotkey
+  settings.
+
+* packaging to release as application, and/or simplify installation
+  for people?  This may require a lot of work, for things like better
+  error handling/messaging, logging, etc.
+
+## Other possible future TODOs
+
 * some kind of status update on export, "success" or similar.
 * if exporting on thread, then gui update shouldn't cause seg fault.
 * save the exported date with the clip
 * if already exported, ask if want to re-export
 * on bookmark, automatically set clip start and end to nearest 'silent times' (if any found and within reasonable range)
 * add "export all" button on main form to export anything not already exported.  Would need status feedback/window, pass/fail indication in bookmark list, and reporting on failures.
-
-* hotkey help - https://mail.python.org/pipermail/python-list/2003-April/229647.html
+* hotkey fixes - https://mail.python.org/pipermail/python-list/2003-April/229647.html
 * maybe "add note" to bookmark
 * export clipped mp3 file to disk ?
 * clip editor popup:

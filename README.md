@@ -154,7 +154,7 @@ This would only be useful for very large models._
 #### Ankiconnect
 
 This is an add-on for Anki.  See
-[https://ankiweb.nqet/shared/info/2055492159](AnkiConnect add-on) on
+[AnkiConnect add-on](https://ankiweb.nqet/shared/info/2055492159) on
 AnkiWeb.
 
 See https://github.com/FooSoft/anki-connect#installation for possible
@@ -211,10 +211,6 @@ See the [pact wiki](https://github.com/jzohrab/pact/wiki).
 
 # Dev notes
 
-## TODOs
-
-See `README_todo.md` and `README_dev_notes.md`.
-
 ## Dependencies
 
 Adding/freezing:
@@ -263,3 +259,16 @@ python -m unittest discover -s test -k save_session
 ```
 
 See `python -m unittest -h` for more flags.
+
+
+## Contributing
+
+* fork the repo
+* make a branch, make your changes
+* ensure the unit tests all still pass.  Add tests as needed to increase coverage/stability
+* push to your fork
+* open a PR
+
+### TODOs
+
+See `docs/todo.md` and `docs/dev_notes.md`.
