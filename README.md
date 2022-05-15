@@ -19,8 +19,7 @@ it will behave on other OS's.**
 
 ## A quick demo
 
-* TODO - YouTube video here
-* TODO YouTube video in Pact wiki
+[![A quick demo](./README-img.png?raw=true)](https://www.youtube.com/embed/ildGZXoe0Cg "A quick demo")
 
 ## Installation
 
