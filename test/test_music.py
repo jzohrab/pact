@@ -26,6 +26,10 @@ class TestBookmark_display(unittest.TestCase):
         b.transcription = s
         self.assertEqual(f'05:14.9 - 05:15.9  "{s}"', b.display(100))
 
+        b.exported = True
+        checkmark = '\u2713'
+        self.assertEqual(f'{checkmark} 05:14.9 - 05:15.9  "{s}"', b.display(100))
+
 class TestBookmark_serialization(unittest.TestCase):
 
     def test_sanity(self):
@@ -49,6 +53,15 @@ class TestBookmark_serialization(unittest.TestCase):
         self.assertEqual(b.position_ms, jb.position_ms)
         self.assertEqual(b.clip_bounds_ms, jb.clip_bounds_ms)
         self.assertEqual(b.transcription, jb.transcription)
+        self.assertFalse(jb.exported, 'backwards-compat check')
+
+    def test_to_from_dict_exported_set(self):
+        b = Bookmark(42.0)
+        b.clip_bounds_ms = [55.0, 66.0]
+        b.transcription = '"Here is some transcription with \n\n things."'
+        b.exported = True
+        jb = Bookmark.from_dict(b.to_dict())
+        self.assertTrue(jb.exported)
 
     # Smoke test, really.
     def test_to_from_json(self):

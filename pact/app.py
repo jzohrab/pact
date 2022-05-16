@@ -895,6 +895,7 @@ class BookmarkWindow(object):
                 transcription = self.bookmark.transcription,
                 tag = tag
             )
+            self.bookmark.exported = True
             self.ok()
         except Exception as e:
             messagebox.showerror(title='Anki export failed', message=e)

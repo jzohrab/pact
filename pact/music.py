@@ -231,6 +231,7 @@ class Bookmark:
         self.clip_bounds_ms = None
         # self._clip_end_ms = None
         self.transcription = None
+        self.exported = False
 
     def to_dict(self):
         """For serialization"""
@@ -244,6 +245,8 @@ class Bookmark:
         b = Bookmark(p)
         b.clip_bounds_ms = d['clip_bounds_ms']
         b.transcription = d['transcription']
+        if d.get('exported', None):
+            b.exported = d['exported']
         return b
 
     def __clipdisplay(self, clip_at):
@@ -263,6 +266,11 @@ class Bookmark:
             if clipped != t:
                 clipped += ' ...'
             ret = f"{ret}  \"{clipped}\""
+
+        if self.exported:
+            checkmark = '\u2713'
+            ret = f"{checkmark} {ret}"
+
         return ret
 
     def display(self, clip_at = 50):
