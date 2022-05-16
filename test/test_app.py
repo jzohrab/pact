@@ -227,7 +227,7 @@ class TestApp_transcription(TKinterTestCase):
 
 class TestApp_session_files(TKinterTestCase):
 
-    def test_save_session(self):
+    def test_save_pact_file(self):
         session_file = 'test/generated-ignored/dummy-1.pact'
         if os.path.exists(session_file):
             os.remove(session_file)
@@ -250,13 +250,13 @@ class TestApp_session_files(TKinterTestCase):
         self.assertFalse(os.path.exists(session_file), 'no file')
 
         self.app.session_file = session_file
-        self.app._save_session()
+        self.app.save_pact_file()
 
         self.assertTrue(os.path.exists(session_file), 'have file')
 
 
     def test_load_session(self):
-        self.app._load_state_file('test/assets/one-bookmark.pact')
+        self.app.load_pact_file('test/assets/one-bookmark.pact')
         self.pump_events()
 
         self.assertEqual(self.app.music_file, 'test/assets/testing.mp3')

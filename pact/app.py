@@ -95,8 +95,8 @@ class MainWindow:
         menu_file.add_command(label='Open mp3', command=self.menu_load_mp3)
         menu_file.add_command(label='Open transcription', command=self.load_transcription)
         menu_file.add_separator()
-        menu_file.add_command(label='Open session', command=self.load_app_state)
-        menu_file.add_command(label='Save session', command=self.save_app_state)
+        menu_file.add_command(label='Open session', command=self.menu_load_pact_file)
+        menu_file.add_command(label='Save session', command=self.menu_save_pact_file)
         menu_file.add_separator()
         menu_file.add_command(label='Close', command=self.quit)
 
@@ -181,7 +181,7 @@ class MainWindow:
 
         f = devsettings.get('SessionFile', None)
         if f:
-            self._load_state_file(f)
+            self.load_pact_file(f)
 
             i = devsettings.get('LoadBookmark', None)
             if i and i != 0:
@@ -224,7 +224,7 @@ class MainWindow:
 
 
     def popup_clip_window_closed(self, i):
-        self._save_session()
+        self.save_pact_file()
 
         self.bookmark_window.root.grab_release()
         self.bookmark_window = None
@@ -257,7 +257,7 @@ class MainWindow:
             v = float(self.slider.get())
         b = pact.music.Bookmark(v)
         self.bookmarks.append(b)
-        self._save_session()
+        self.save_pact_file()
 
         i = len(self.bookmarks) - 1
         lst = self.bookmarks_lst
@@ -412,7 +412,7 @@ class MainWindow:
             return s
 
 
-    def save_app_state(self):
+    def menu_save_pact_file(self):
         """Pickle app state for later reload."""
         suggested = os.path.basename(self.music_file)
         fname, ext = os.path.splitext(suggested)
@@ -421,10 +421,10 @@ class MainWindow:
             print("Cancelled")
             return
         self.session_file = f
-        self._save_session()
+        self.save_pact_file()
 
 
-    def _save_session(self):
+    def save_pact_file(self):
         """Save session, either explicitly from user or when any bookmark changes."""
 
         if not self.config.autosave:
@@ -439,13 +439,13 @@ class MainWindow:
         with open(self.session_file, "w") as dest:
             dest.write(j)
 
-    def load_app_state(self):
+    def menu_load_pact_file(self):
         """Load previously pickled state."""
         f = filedialog.askopenfilename(filetypes = (("Pact clips file", "*.pact"),))
-        self._load_state_file(f)
+        self.load_pact_file(f)
 
 
-    def _load_state_file(self, sessionfile):
+    def load_pact_file(self, sessionfile):
         if sessionfile is None or sessionfile == '':
             print("Cancelled")
             return
