@@ -413,13 +413,24 @@ class MainWindow:
 
 
     def menu_save_pact_file(self):
-        """Pickle app state for later reload."""
-        suggested = os.path.basename(self.music_file)
-        fname, ext = os.path.splitext(suggested)
-        f = filedialog.asksaveasfilename(initialfile = f'{fname}.pact', filetypes = (("Pact clips file", "*.pact"),))
+        """Save app state for later reload."""
+        initialdir = os.path.dirname(self.music_file)
+        fname, ext = os.path.splitext(os.path.basename(self.music_file))
+        initialfile = f'{fname}.pact'
+
+        # Use existing session file, if that's set.
+        if (self.session_file):
+            initialdir = os.path.dirname(self.session_file)
+            initialfile = os.path.basename(self.session_file)
+
+        f = filedialog.asksaveasfilename(
+            initialdir = initialdir,
+            initialfile = initialfile,
+            filetypes = (("Pact clips file", "*.pact"),))
         if f is None or f ==  '':
             print("Cancelled")
             return
+
         self.session_file = f
         self.save_pact_file()
 
