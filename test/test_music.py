@@ -30,6 +30,19 @@ class TestBookmark_display(unittest.TestCase):
         checkmark = '\u2713'
         self.assertEqual(f'{checkmark} 05:14.9 - 05:15.9  "{s}"', b.display(100))
 
+class TestBookmark_slider_pos_ms(unittest.TestCase):
+
+    def test_slider_pos_depends_on_bounds(self):
+        time = 100
+        b = Bookmark(time)
+        self.assertEqual(b.effective_pos_ms, time, 'time')
+
+        b.clip_bounds_ms = [42, None]
+        self.assertEqual(b.effective_pos_ms, time, 'incomplete clip def')
+
+        b.clip_bounds_ms = [42, 52]
+        self.assertEqual(b.effective_pos_ms, 42, 'now at clip start')
+
 class TestBookmark_serialization(unittest.TestCase):
 
     def test_sanity(self):

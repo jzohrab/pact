@@ -233,6 +233,15 @@ class Bookmark:
         self.transcription = None
         self.exported = False
 
+    @property
+    def effective_pos_ms(self):
+        """Use the effective_pos_ms to position the slider."""
+        cb = self.clip_bounds_ms
+        if cb and cb[1]:
+            return cb[0]
+        return self.position_ms
+
+
     def to_dict(self):
         """For serialization"""
         return self.__dict__

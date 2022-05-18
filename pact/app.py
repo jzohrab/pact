@@ -302,7 +302,7 @@ class MainWindow:
 
 
     def move_to_bookmark(self, b):
-        self.music_player.reposition(b.position_ms)
+        self.music_player.reposition(b.effective_pos_ms)
 
 
     def reposition(self, value_ms_f):
