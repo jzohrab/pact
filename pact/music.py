@@ -1,6 +1,7 @@
 import vlc
 from enum import Enum
 from pact.utils import TimeUtils
+import re
 
 
 class PlayerState(Enum):
@@ -263,12 +264,18 @@ class Bookmark:
         if t is None or t.strip() == '':
             return None
 
+        # Only use the first line, b/c that's all that can be
+        # displayed anyway.
+        t = t.split('\n')[0]
+
+        t = re.sub("\[.*?\]", '', t).strip()
+
         ret = t[:clip_at]
         if ret != t:
             ret += ' ...'
         return ret
 
-    def __clipdisplay(self, clip_at):
+    def __line_display(self, clip_at):
         b = self.clip_bounds_ms
         if b is None:
             return None
@@ -291,7 +298,7 @@ class Bookmark:
 
     def display(self, clip_at = 50):
         """String description of this for display in list boxes."""
-        cd = self.__clipdisplay(clip_at)
+        cd = self.__line_display(clip_at)
         if cd is not None:
             return cd
         return f"Bookmark {TimeUtils.time_string(self.position_ms)}"

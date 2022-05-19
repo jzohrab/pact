@@ -30,6 +30,21 @@ class TestBookmark_display(unittest.TestCase):
         checkmark = '\u2713'
         self.assertEqual(f'{checkmark} 05:14.9 - 05:15.9  "{s}"', b.display(100))
 
+
+    def test_square_bracketed_text_is_omitted(self):
+        """
+        textmatch.py sometimes adds context in square brackets before and
+        after a clip, but when listing the bookmarks don't bother
+        showing that, just show what the clip text actually was.
+        """
+        time = (5 * 60 + 14) * 1000 + 870
+        b = Bookmark(time)
+        b.clip_bounds_ms = [time, time + 1000]
+        b.transcription = "[Some text] ... and things ... [ok]"
+        self.assertEqual(f'05:14.9 - 05:15.9  "... and things ..."', b.display(100))
+
+        self.assertEqual(f'05:14.9 - 05:15.9  "... and th ..."', b.display(10))
+
 class TestBookmark_slider_pos_ms(unittest.TestCase):
 
     def test_slider_pos_depends_on_bounds(self):
