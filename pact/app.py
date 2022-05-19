@@ -883,10 +883,16 @@ class BookmarkWindow(object):
 
     def lookup(self):
         """Lookup highlighted word, and open popup window."""
-        term = None
-        tw = self.transcription_textbox
-        if tw.tag_ranges(SEL):
-            term = tw.get(SEL_FIRST, SEL_LAST)
+
+        def _get_selection(txt):
+            ret = None
+            if txt.tag_ranges(SEL):
+                ret = txt.get(SEL_FIRST, SEL_LAST)
+                # Deselect anything selected.
+                txt.tag_remove(SEL, 1.0, END)
+            return ret
+
+        term = _get_selection(self.transcription_textbox)
 
         if term is None or term.strip() == '':
             print('Nothing selected')
