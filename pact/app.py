@@ -583,7 +583,7 @@ class BookmarkWindow(object):
             b = Button(ctl_frame, text = text, width = 8, command = comm)
             b.grid(row=0, column = index, padx=2)
 
-        clip_details_frame = Frame(self.root, borderwidth=1, relief='groove')
+        clip_details_frame = Frame(self.root) # , borderwidth=1, relief='groove')
         clip_details_frame.grid(row=3, column=0, pady=5)
 
         clip_interval_lbl = Label(clip_details_frame, text='-')
@@ -592,7 +592,7 @@ class BookmarkWindow(object):
             s = self.start_var.get()
             e = self.end_var.get()
             text = TimeUtils.interval_string(s, e, 'n/a')
-            clip_interval_lbl.configure(text = f'Clip: {text}')
+            clip_interval_lbl.configure(text = f'{text} :')
             self.set_clip_bounds_markers()
 
         self.start_var.trace('w', lambda a,b,c: update_clip_interval_lbl())
@@ -603,11 +603,13 @@ class BookmarkWindow(object):
         deffont = font.nametofont("TkDefaultFont")
         self.transcription_textbox = scrolledtext.ScrolledText(
             clip_details_frame,
-            height = 6, width = 50, wrap=WORD, borderwidth=1,
-            font = deffont
-        ) # relief='solid'
+            height = 4, width = 50, wrap=WORD, borderwidth=1,
+            font = deffont,
+            relief = 'solid'
+        )
         if (self.bookmark.transcription):
             self.transcription_textbox.insert(1.0, self.bookmark.transcription)
+
         clip_interval_lbl.grid(row=0, column=1, pady=2, sticky = W)
         self.transcription_textbox.grid(row=1, column = 1)
 
@@ -619,6 +621,16 @@ class BookmarkWindow(object):
         )
         self.transcription_progress['value'] = 0
         self.transcription_progress.grid(row=2, column = 1)
+
+        notes_lbl = Label(clip_details_frame, text='Notes:')
+        self.extra_textbox = scrolledtext.ScrolledText(
+            clip_details_frame,
+            height = 4, width = 50, wrap=WORD, borderwidth=1,
+            font = deffont,
+            relief = 'solid'
+        )
+        notes_lbl.grid(row=3, column = 1, sticky = W)
+        self.extra_textbox.grid(row=4, column = 1)
 
         exit_frame = Frame(self.root)
         exit_frame.grid(row=5, column=0, pady=5)
