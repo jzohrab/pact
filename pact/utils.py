@@ -78,8 +78,17 @@ def anki_card_export(
         audiosegment,
         ankiconfig,
         transcription = None,
+        notes = None,
         tag = None):
     """Export the current clip and transcription to Anki using Ankiconnect."""
+
+    required = [ 'Ankiconnect', 'MediaFolder',
+                 'AudioField', 'TranscriptionField', 'NotesField',
+                 'Deck', 'NoteType' ]
+    missing = [r for r in required if ankiconfig.get(r, None) is None]
+    if len(missing) > 0:
+        msg = f"Missing required fields {', '.join(missing)} in config file."
+        raise RuntimeError(msg)
 
     now = datetime.now() # current date and time
     date_time = now.strftime("%Y%m%d_%H%M%S")
@@ -99,8 +108,12 @@ def anki_card_export(
         ankiconfig['AudioField']: f'[sound:{filename}]'
     }
 
-    if transcription is not None and transcription != '':
-        fields[ ankiconfig['TranscriptionField'] ] = transcription.strip().replace("\n", '<br>')
+    def _set_field(fldname, txt):
+        if txt is not None and txt != '':
+            fields[fldname] = txt.strip().replace("\n", '<br>')
+
+    _set_field(ankiconfig['TranscriptionField'], transcription)
+    _set_field(ankiconfig['NotesField'], notes)
 
     postjson = {
         "action": "addNote",

@@ -22,3 +22,4 @@ Deck = Parent-Deck::Child-Deck
 NoteType = AudioClip
 AudioField = Audio
 TranscriptionField = Text
+NotesField = Extra_info

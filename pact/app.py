@@ -924,6 +924,7 @@ class BookmarkWindow(object):
                 audiosegment = c,
                 ankiconfig = self.config['Anki'],
                 transcription = self.bookmark.transcription,
+                notes = self.bookmark.notes,
                 tag = tag
             )
             self.bookmark.exported = True
