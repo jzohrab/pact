@@ -170,13 +170,10 @@ class MainWindow:
         window.bind('<d>', lambda e: self.delete_selected_bookmark())
         window.bind('<Return>', lambda e: self.popup_clip_window())
 
-        self.init_dev()
-
 
     def init_dev(self):
         if not self.config.has_section('Dev'):
             return
-        print('Doing dev configuration')
         devsettings = self.config['Dev']
 
         f = devsettings.get('SessionFile', None)

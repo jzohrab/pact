@@ -35,6 +35,23 @@ def actual_filename(f, optionaldir = None):
     return f
 
 
+def configure_from_args(app, args):
+    if args.pact is not None:
+        f = actual_filename(args.pact, args.dirname)
+        must_exist(f)
+        app.load_pact_file(f)
+    elif args.mp3 is not None:
+        f = actual_filename(args.mp3, args.dirname)
+        must_exist(f)
+        app.load_mp3(f)
+    else:
+        # Default
+        s = "pact/assets/Python audio clip tool.mp3"
+        app.load_mp3(s)
+
+
+###############################
+
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--dirname", help="directory to search for files")
@@ -43,26 +60,26 @@ parser.add_argument("-m", "--mp3", help="path to .mp3 file")
 args = parser.parse_args()
 
 
-# Lambda to run after initialization.
-setup = None
-
-if args.pact is not None:
-    f = actual_filename(args.pact, args.dirname)
-    must_exist(f)
-    setup = lambda app: app.load_pact_file(f)
-elif args.mp3 is not None:
-    f = actual_filename(args.mp3, args.dirname)
-    must_exist(f)
-    setup = lambda app: app.load_mp3(f)
-else:
-    # Default
-    s = "pact/assets/Python audio clip tool.mp3"
-    setup = lambda app: app.load_mp3(s)
-
-
 copy_config_example()
 config = get_config()
 root = Tk()
 app = pact.app.MainWindow(root, config)
-setup(app)
+
+if config.has_section('Dev'):
+    if args.pact or args.mp3:
+        # Could get confusing if the Dev settings are set,
+        # but the files are also set.
+        print('\nPotential confusing configuration:')
+        print('Config file [Dev] is set, but pact file or mp3 specified.')
+        print('STOPPING, just in case of args confusion.\n')
+        sys.exit(1)
+
+    print('Loading dev configuration')
+    app.init_dev()
+
+else:
+    # Setup using the provided flags.
+    configure_from_args(app, args)
+
+
 root.mainloop()

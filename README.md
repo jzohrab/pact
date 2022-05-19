@@ -236,6 +236,10 @@ PACTCONFIG=config-dev.ini ./pact.sh
 # Load this session file on start:
 SessionFile = /path/to/some/file.clips
 
+# If SessionFile is set, load this bookmark
+# (indexed from 0):
+LoadBookmark = 7
+
 # Load this mp3 on start, if SessionFile not present
 LoadFile = /path/to/file.mp3
 ```
