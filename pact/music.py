@@ -258,6 +258,16 @@ class Bookmark:
             b.exported = d['exported']
         return b
 
+    def __transcription_display(self, clip_at):
+        t = self.transcription
+        if t is None or t.strip() == '':
+            return None
+
+        ret = t[:clip_at]
+        if ret != t:
+            ret += ' ...'
+        return ret
+
     def __clipdisplay(self, clip_at):
         b = self.clip_bounds_ms
         if b is None:
@@ -269,12 +279,9 @@ class Bookmark:
         e = TimeUtils.time_string(e)
         ret = f"{s} - {e}"
 
-        t = self.transcription
-        if t is not None and t.strip() != '':
-            clipped = t[:clip_at]
-            if clipped != t:
-                clipped += ' ...'
-            ret = f"{ret}  \"{clipped}\""
+        t = self.__transcription_display(clip_at)
+        if t:
+            ret = f"{ret}  \"{t}\""
 
         if self.exported:
             checkmark = '\u2713'
