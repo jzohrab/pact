@@ -288,7 +288,7 @@ class Bookmark:
 
         t = self.__transcription_display(clip_at)
         if t:
-            ret = f"{ret}  \"{t}\""
+            ret = f"{s}  \"{t}\""
 
         if self.exported:
             checkmark = '\u2713'

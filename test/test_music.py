@@ -18,19 +18,20 @@ class TestBookmark_display(unittest.TestCase):
         self.assertEqual('Bookmark 05:14.9', b.display())
 
         b.clip_bounds_ms = [clipstart, clipstart + 1000]
-        bounds_as_text = '05:07.7 - 05:08.7'
+        bounds_as_text = f'05:07.7 - 05:08.7'
         self.assertEqual(bounds_as_text, b.display())
 
         b.transcription = ''
         self.assertEqual(bounds_as_text, b.display())
 
+        clipstart_text = '05:07.7'
         s = 'long string of stuff'
         b.transcription = s
-        self.assertEqual(f'{bounds_as_text}  "{s}"', b.display(100))
+        self.assertEqual(f'{clipstart_text}  "{s}"', b.display(100))
 
         b.exported = True
         checkmark = '\u2713'
-        self.assertEqual(f'{checkmark} {bounds_as_text}  "{s}"', b.display(100))
+        self.assertEqual(f'{checkmark} {clipstart_text}  "{s}"', b.display(100))
 
 
     def test_square_bracketed_text_is_omitted(self):
@@ -43,9 +44,8 @@ class TestBookmark_display(unittest.TestCase):
         b = Bookmark(time)
         b.clip_bounds_ms = [time, time + 1000]
         b.transcription = "[Some text] ... and things ... [ok]"
-        self.assertEqual(f'05:14.9 - 05:15.9  "... and things ..."', b.display(100))
-
-        self.assertEqual(f'05:14.9 - 05:15.9  "... and th ..."', b.display(10))
+        self.assertEqual(f'05:14.9  "... and things ..."', b.display(100))
+        self.assertEqual(f'05:14.9  "... and th ..."', b.display(10))
 
 class TestBookmark_slider_pos_ms(unittest.TestCase):
 
