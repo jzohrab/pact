@@ -888,13 +888,17 @@ class BookmarkWindow(object):
             ret = None
             if txt.tag_ranges(SEL):
                 ret = txt.get(SEL_FIRST, SEL_LAST)
+                if ret.strip() == '':
+                    ret = None
                 # Deselect anything selected.
                 txt.tag_remove(SEL, 1.0, END)
             return ret
 
         term = _get_selection(self.transcription_textbox)
+        if term is None:
+            term = _get_selection(self.notes_textbox)
 
-        if term is None or term.strip() == '':
+        if term is None:
             print('Nothing selected')
             return
 
