@@ -608,7 +608,7 @@ class BookmarkWindow(object):
             relief = 'solid'
         )
         if (self.bookmark.transcription):
-            self.transcription_textbox.insert(1.0, self.bookmark.transcription)
+            self.transcription_textbox.insert(1.0, self.bookmark.transcription.strip())
 
         clip_interval_lbl.grid(row=0, column=1, pady=2, sticky = W)
         self.transcription_textbox.grid(row=1, column = 1)
@@ -623,14 +623,17 @@ class BookmarkWindow(object):
         self.transcription_progress.grid(row=2, column = 1)
 
         notes_lbl = Label(clip_details_frame, text='Notes:')
-        self.extra_textbox = scrolledtext.ScrolledText(
+        self.notes_textbox = scrolledtext.ScrolledText(
             clip_details_frame,
             height = 4, width = 50, wrap=WORD, borderwidth=1,
             font = deffont,
             relief = 'solid'
         )
+        if (self.bookmark.notes):
+            self.notes_textbox.insert(1.0, self.bookmark.notes.strip())
+
         notes_lbl.grid(row=3, column = 1, sticky = W)
-        self.extra_textbox.grid(row=4, column = 1)
+        self.notes_textbox.grid(row=4, column = 1)
 
         exit_frame = Frame(self.root)
         exit_frame.grid(row=5, column=0, pady=5)
@@ -862,12 +865,17 @@ class BookmarkWindow(object):
 
     def save_clip(self):
         self.bookmark.position_ms = float(self.entry_var.get())
-        txt = self.transcription_textbox.get(1.0, END)
-        if txt is not None and txt != '':
-            self.bookmark.transcription = txt.strip()
-        else:
-            self.bookmark.transcription = None
         self.set_clip_bounds()
+
+        def _get(txtbox):
+            txt = txtbox.get(1.0, END)
+            if txt is not None and txt != '':
+                return txt.strip()
+            return None
+
+        self.bookmark.transcription = _get(self.transcription_textbox)
+        self.bookmark.notes = _get(self.notes_textbox)
+
 
 
     def lookup(self):

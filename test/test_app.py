@@ -168,6 +168,62 @@ class TestApp_clip_window(TKinterTestCase):
         self.assertEqual(b.clip_bounds_ms, [ sliderpos - 1000, sliderpos + 1000 ], 'bounds set')
 
 
+    def test_alter_save_and_open_clip(self):
+        self.app.load_mp3('test/assets/testing.mp3')
+        self.pump_events()
+
+        sliderpos = 5600
+        self.app.reposition(sliderpos)
+        self.pump_events()
+
+        # "Add bookmark" hotkey.
+        self.app.window.event_generate('<m>')
+        self.pump_events()
+
+        self.assertEqual(len(self.app.bookmarks), 2, 'sanity check')
+
+        self.app.popup_clip_window()
+        self.pump_events()
+
+        popup = self.app.bookmark_window
+        self.assertIsNotNone(popup, 'sanity check, have popup')
+        self.assertTrue(popup.root.winfo_viewable(), 'popup visible')
+
+        popup.reposition(sliderpos - 1000)
+        self.pump_events()
+        popup.set_clip_start()
+        self.pump_events()
+
+        popup.reposition(sliderpos + 1000)
+        self.pump_events()
+        popup.set_clip_end()
+        self.pump_events()
+
+        popup.transcription_textbox.insert(1.0, 'hello there')
+        popup.notes_textbox.insert(1.0, 'some notes here')
+        self.pump_events()
+
+        popup.ok()
+        self.pump_events()
+
+        b = self.app.bookmarks[1]
+        self.assertEqual(b.clip_bounds_ms, [ sliderpos - 1000, sliderpos + 1000 ], 'bounds set')
+        self.assertEqual(b.transcription, 'hello there', 'transcription saved')
+        self.assertEqual(b.notes, 'some notes here', 'notes saved')
+
+        self.app.popup_clip_window()
+        self.pump_events()
+
+        popup = self.app.bookmark_window
+        self.assertIsNotNone(popup, 'sanity check, have popup')
+        self.assertTrue(popup.root.winfo_viewable(), 'popup visible')
+        self.assertEqual('hello there', popup.transcription_textbox.get(1.0, tkinter.END).strip(), 'txn text loaded')
+        self.assertEqual('some notes here', popup.notes_textbox.get(1.0, tkinter.END).strip(), 'notes loaded')
+
+        popup.ok()
+        self.pump_events()
+
+
 class TestApp_transcription(TKinterTestCase):
 
     def test_transcribe_with_transcription_correction(self):

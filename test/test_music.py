@@ -83,6 +83,7 @@ class TestBookmark_serialization(unittest.TestCase):
         self.assertEqual(b.position_ms, jb.position_ms)
         self.assertEqual(b.clip_bounds_ms, jb.clip_bounds_ms)
         self.assertEqual(b.transcription, jb.transcription)
+        self.assertEqual(b.notes, jb.notes)
         self.assertFalse(jb.exported, 'backwards-compat check')
 
     def test_to_from_dict_exported_set(self):
@@ -98,9 +99,11 @@ class TestBookmark_serialization(unittest.TestCase):
         b = Bookmark(42.0)
         b.clip_bounds_ms = [55.0, 66.0]
         b.transcription = '"Here is some transcription with \n\n things."'
+        b.notes = "And here are some extra notes!\n* bullet\n*bullet 2"
         b_json = json.dumps(b.to_dict())
         # print(b_json)
         jb = Bookmark.from_dict(json.loads(b_json))
         self.assertEqual(b.position_ms, jb.position_ms)
         self.assertEqual(b.clip_bounds_ms, jb.clip_bounds_ms)
-        self.assertEqual(b.transcription, jb.transcription)
+        self.assertEqual(b.transcription, jb.transcription, 'txn')
+        self.assertEqual(b.notes, jb.notes, 'notes')

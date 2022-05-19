@@ -230,8 +230,8 @@ class Bookmark:
     def __init__(self, pos_ms):
         self.position_ms = pos_ms
         self.clip_bounds_ms = None
-        # self._clip_end_ms = None
         self.transcription = None
+        self.notes = None
         self.exported = False
 
     @property
@@ -255,8 +255,8 @@ class Bookmark:
         b = Bookmark(p)
         b.clip_bounds_ms = d['clip_bounds_ms']
         b.transcription = d['transcription']
-        if d.get('exported', None):
-            b.exported = d['exported']
+        b.exported = d.get('exported', False)
+        b.notes = d.get('notes', None)
         return b
 
     def __transcription_display(self, clip_at):
