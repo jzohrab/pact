@@ -19,6 +19,10 @@ class TKinterTestCase(unittest.TestCase):
 
         # print('doing child setup')
         self.config = pact.app.Config.from_file('test/assets/test-config.ini')
+
+        # Test settings: don't play audio!
+        self.config.autoplayclips = False
+
         self.app = pact.app.MainWindow(self.root, self.config)
         self.assertIsNone(self.app.music_file, 'Sanity check, nothing loaded at start')
 

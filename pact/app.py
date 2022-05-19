@@ -40,6 +40,9 @@ class Config(configparser.ConfigParser):
         # Auto-save the session .pact file when a bookmark changes.
         self.autosave = True
 
+        # Automatically play clips when the clip popup window opens.
+        self.autoplayclips = True
+
     @staticmethod
     def from_file(filename):
         """Return configparser.config for config.ini, or the value in PACTCONFIG env var."""
@@ -683,8 +686,8 @@ class BookmarkWindow(object):
         self.root.grab_set()
         self.root.transient(parent)
 
-        # On open, always play the defined clip.
-        self.play_clip()
+        if self.config.autoplayclips:
+            self.play_clip()
 
 
     def reposition_popup(self, parent, delta_x, delta_y):
