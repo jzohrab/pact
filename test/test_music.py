@@ -13,22 +13,24 @@ class TestBookmark_display(unittest.TestCase):
         b = Bookmark(time)
         self.assertEqual('Bookmark 05:14.9', b.display())
 
-        b.clip_bounds_ms = [time, None]
+        clipstart = (5 * 60 + 7) * 1000 + 666
+        b.clip_bounds_ms = [clipstart, None]
         self.assertEqual('Bookmark 05:14.9', b.display())
 
-        b.clip_bounds_ms = [time, time + 1000]
-        self.assertEqual('05:14.9 - 05:15.9', b.display())
+        b.clip_bounds_ms = [clipstart, clipstart + 1000]
+        bounds_as_text = '05:07.7 - 05:08.7'
+        self.assertEqual(bounds_as_text, b.display())
 
         b.transcription = ''
-        self.assertEqual('05:14.9 - 05:15.9', b.display())
+        self.assertEqual(bounds_as_text, b.display())
 
         s = 'long string of stuff'
         b.transcription = s
-        self.assertEqual(f'05:14.9 - 05:15.9  "{s}"', b.display(100))
+        self.assertEqual(f'{bounds_as_text}  "{s}"', b.display(100))
 
         b.exported = True
         checkmark = '\u2713'
-        self.assertEqual(f'{checkmark} 05:14.9 - 05:15.9  "{s}"', b.display(100))
+        self.assertEqual(f'{checkmark} {bounds_as_text}  "{s}"', b.display(100))
 
 
     def test_square_bracketed_text_is_omitted(self):
