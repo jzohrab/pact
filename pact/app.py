@@ -532,10 +532,10 @@ class BookmarkWindow(object):
         self.slider_var = DoubleVar()
 
         slider_frame = Frame(self.root)
-        slider_frame.grid(row=1, column=0, pady=10)
+        slider_frame.grid(row=1, column=0, pady=5)
 
         w, fig = self.plot(slider_frame, 7)
-        w.grid(row=0, column=0, pady=10)
+        w.grid(row=0, column=0, pady=5)
 
         # Keep a handle on fig, so can close it when the window
         # closes; otherwise, this eventually gets a warning.
@@ -567,7 +567,7 @@ class BookmarkWindow(object):
         self.slider_var.trace('w', update_slider_label)
 
         ctl_frame = Frame(self.root)
-        ctl_frame.grid(row=2, column=0, pady=10)
+        ctl_frame.grid(row=2, column=0, pady=2)
 
         self.play_btn = Button(ctl_frame, text='Play', width = 8, command=self.play_pause)
         self.play_btn.grid(row=0, column=0, padx=2)
@@ -584,7 +584,7 @@ class BookmarkWindow(object):
             b.grid(row=0, column = index, padx=2)
 
         clip_details_frame = Frame(self.root, borderwidth=1, relief='groove')
-        clip_details_frame.grid(row=3, column=0, pady=10)
+        clip_details_frame.grid(row=3, column=0, pady=5)
 
         clip_interval_lbl = Label(clip_details_frame, text='-')
 
@@ -964,7 +964,7 @@ class BookmarkWindow(object):
     def plot(self, frame, width_inches):
         """Draws plot, returns widget for subsequent placement."""
         fig, plot1 = plt.subplots()
-        fig.set_size_inches(width_inches, 1)
+        fig.set_size_inches(width_inches, 0.4)
 
         # ref https://stackoverflow.com/questions/2176424/
         #   hiding-axis-text-in-matplotlib-plots
