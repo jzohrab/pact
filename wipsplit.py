@@ -68,20 +68,24 @@ def get_chunk_times(in_filename, silence_threshold, silence_duration):
 
     # Chunks start when silence ends, and chunks end when silence starts.
     timematch = r'(?P<time>[0-9]+(\.?[0-9]*))'
-    silence_start_re = re.compile(f'silence_start: {timematch}$')
-    silence_end_re = re.compile(f'silence_end: {timematch} ')
+    start_re = re.compile(f'silence_start: {timematch}$')
+    end_re = re.compile(f'silence_end: {timematch} ')
+
+    def time_match(m):
+        return float(m.group('time'))
+
     chunk_starts = []
     chunk_ends = []
     for line in lines:
-        silence_start_match = silence_start_re.search(line)
-        silence_end_match = silence_end_re.search(line)
-        if silence_start_match:
-            chunk_ends.append(float(silence_start_match.group('time')))
+        start_match = start_re.search(line)
+        end_match = end_re.search(line)
+        if start_match:
+            chunk_ends.append(time_match(start_match))
             if len(chunk_starts) == 0:
                 # Started with non-silence.
                 chunk_starts.append(0.)
-        elif silence_end_match:
-            chunk_starts.append(float(silence_end_match.group('time')))
+        elif end_match:
+            chunk_starts.append(time_match(end_match))
 
     if len(chunk_starts) == 0:
         # No silence found.
