@@ -44,10 +44,6 @@ def configure_from_args(app, args):
         f = actual_filename(args.mp3, args.dirname)
         must_exist(f)
         app.load_mp3(f)
-    else:
-        # Default
-        s = "pact/assets/Python audio clip tool.mp3"
-        app.load_mp3(s)
 
 
 ###############################

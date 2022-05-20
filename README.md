@@ -107,8 +107,9 @@ At this point, you should be able to run pact:
 ./pact.sh
 ```
 
-The pact app should open, and when you click "Play" you should hear
-some audio.  If you can, the basics are in place.
+The pact app should open.  Then you can open an mp3 on your system, or
+the file "pact/assets/pact.mp3", and click "Play".  If you can hear
+audio, the basics are in place.
 
 ### Install 2: Your stuff
 
