@@ -224,7 +224,8 @@ class MainWindow:
 
 
     def popup_clip_window_closed(self, i):
-        self.save_pact_file()
+        if self.config.autosave:
+            self.save_pact_file()
 
         self.bookmark_window.root.grab_release()
         self.bookmark_window = None
@@ -257,7 +258,9 @@ class MainWindow:
             v = float(self.slider.get())
         b = pact.music.Bookmark(v)
         self.bookmarks.append(b)
-        self.save_pact_file()
+
+        if self.config.autosave:
+            self.save_pact_file()
 
         i = len(self.bookmarks) - 1
         lst = self.bookmarks_lst
@@ -444,11 +447,7 @@ class MainWindow:
 
 
     def save_pact_file(self):
-        """Save session, either explicitly from user or when any bookmark changes."""
-
-        if not self.config.autosave:
-            return
-
+        """Save session, either explicitly from user or on bookmark changed."""
         if self.session_file is None:
             # print('No session file, not saving.')
             return
