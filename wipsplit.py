@@ -67,8 +67,9 @@ def get_chunk_times(in_filename, silence_threshold, silence_duration):
     lines = outlines
 
     # Chunks start when silence ends, and chunks end when silence starts.
-    silence_start_re = re.compile(r'silence_start: (?P<time>[0-9]+(\.?[0-9]*))$')
-    silence_end_re = re.compile(r'silence_end: (?P<time>[0-9]+(\.?[0-9]*)) ')
+    timematch = r'(?P<time>[0-9]+(\.?[0-9]*))'
+    silence_start_re = re.compile(f'silence_start: {timematch}$')
+    silence_end_re = re.compile(f'silence_end: {timematch} ')
     chunk_starts = []
     chunk_ends = []
     for line in lines:
