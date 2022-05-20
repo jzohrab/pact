@@ -55,14 +55,29 @@ def get_chunk_times(in_filename, silence_threshold, silence_duration):
             .output('-', format='null')
             .compile()
         ) + ['-nostats'],  # FIXME: use .nostats() once it's implemented in ffmpeg-python.
-        stderr=subprocess.PIPE
+        stderr=subprocess.PIPE,
+        stdout = subprocess.PIPE
     )
-    output = p.communicate()[1].decode('utf-8')
-    if p.returncode != 0:
-        sys.stderr.write(output)
-        sys.exit(1)
-    logger.debug(output)
-    lines = output.splitlines()
+
+    outlines = []
+    while True:
+        print("Looping")
+        line = p.stderr.readline()
+        if not line:
+            break
+        s = line.decode('utf-8').strip()
+        outlines.append(s)
+        print(s)
+        sys.stdout.flush()
+    
+    # output = p.communicate()[1].decode('utf-8')
+    # if p.returncode != 0:
+    #     sys.stderr.write(output)
+    #     sys.exit(1)
+    # logger.debug(output)
+    # lines = output.splitlines()
+
+    lines = outlines
 
     # Chunks start when silence ends, and chunks end when silence starts.
     chunk_starts = []
