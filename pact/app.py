@@ -359,7 +359,10 @@ class MainWindow:
     def set_title(self):
         parts = [ self.music_file, self.transcription_file ]
         parts = [ os.path.basename(x) for x in parts if x ]
-        self.window.title(f"Pact v{__version__}: {' / '.join(parts)}")
+        header = ' / '.join(parts)
+        pv = f"Pact v{__version__}"
+        t = ': '.join([ s for s in [ pv, header ] if s ])
+        self.window.title(t)
 
 
     def play_pause(self):
