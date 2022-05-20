@@ -193,7 +193,7 @@ if __name__ == '__main__':
     print(f'Count of chunks after filter: {len(chunk_times)}')
     
     # Now for each chunk, play the segments of the file.
-    for ct in chunk_times[0:5]:
+    for ct in chunk_times:
         print('----')
         print(ct)
 
@@ -202,7 +202,7 @@ if __name__ == '__main__':
 
         seg = pact.utils.audiosegment_from_mp3_time_range(in_filename, ct[0] * 1000.0, ct[1] * 1000.0)
         t = transcribe(seg, b)
-        pydub.playback.play(seg)
+        # pydub.playback.play(seg)
         t.join()
 
         print(b.to_dict())
