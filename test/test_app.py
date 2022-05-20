@@ -343,11 +343,13 @@ class TestApp_auto_create_session_files(TKinterTestCase):
         self.assertEqual(tempfile, self.app.session_file, 'have session file')
         self.assertTrue(os.path.exists(tempfile), 'file on disk')
 
+    def test_load_session_doesnt_create_auto_session_file(self):
+        self.app.load_pact_file('test/assets/one-bookmark.pact')
+        self.pump_events()
 
-    # Tests:
-    # opening a music file creates an auto-pact file in same dir
-    # opening a pact file doesn't create an auto-pact file
-    # open multiple music files creates multiple pact files
+        self.assertEqual(self.app.music_file, 'test/assets/testing.mp3')
+        tempfile = 'test/assets/testing.mp3.temp.pact'
+        self.assertFalse(os.path.exists(tempfile), 'file should not exist')
 
 
 
