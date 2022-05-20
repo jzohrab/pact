@@ -23,6 +23,7 @@ import subprocess
 import sys
 
 import pact.utils
+import pact.music
 import pydub.playback
 
 import pact.textmatch
@@ -113,9 +114,9 @@ def get_chunk_times(in_filename, silence_threshold, silence_duration):
 
 
 
-def transcribe(c):
+def transcribe(c, bookmark):
     def __set_transcription(transcription):
-        print(transcription)
+        bookmark.transcription = transcription
 
     def __update_progressbar(n):
         print(f'{n}%')
@@ -131,7 +132,7 @@ def transcribe(c):
         fuzzy_text_match_accuracy = 80
         matches = pact.textmatch.search(contents, sought, True, fuzzy_text_match_accuracy)
         if len(matches) == 0:
-            return sought
+            return f'(?) {sought}'
 
         print(f'matches: {matches}')
         result = [ pact.textmatch.ellipsify(m['match'], m['context']) for m in matches ]
@@ -145,8 +146,8 @@ def transcribe(c):
     ts = vosktranscription.VoskTranscriptionStrategy(voskmodel)
     ts.start(
         audiosegment = c,
-        on_update_transcription = lambda s: print(s),
-        on_update_progress = lambda n: print(f'{n}%'),
+        on_update_transcription = lambda s: __set_transcription(s),
+        on_update_progress = lambda n: None,
         on_finished = lambda s: __try_transcription_search(s)
     )
     return ts.transcription_thread
@@ -195,7 +196,13 @@ if __name__ == '__main__':
     for ct in chunk_times[0:5]:
         print('----')
         print(ct)
+
+        b = pact.music.Bookmark(ct[0])
+        b.clip_bounds_ms = [ ct[0], ct[1] ]
+
         seg = pact.utils.audiosegment_from_mp3_time_range(in_filename, ct[0] * 1000.0, ct[1] * 1000.0)
-        t = transcribe(seg)
+        t = transcribe(seg, b)
         pydub.playback.play(seg)
         t.join()
+
+        print(b.to_dict())
