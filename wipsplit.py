@@ -110,6 +110,47 @@ def get_chunk_times(in_filename, silence_threshold, silence_duration):
 
 
 
+def transcribe(c):
+    def __set_transcription(transcription):
+        t = self.transcription_textbox
+        # Weird that it's 1.0 ... ref stackoverflow question 27966626.
+        t.delete(1.0, END)
+        t.insert(1.0, transcription)
+
+    def __update_progressbar(n):
+        self.transcription_progress['value'] = n
+
+    def __search_transcription(sought, transcription_file):
+        if transcription_file is None:
+            return sought
+
+        contents = None
+        with open(transcription_file) as f:
+            contents = f.read()
+
+        fuzzy_text_match_accuracy = 80
+        matches = pact.textmatch.search(contents, sought, True, fuzzy_text_match_accuracy)
+        if len(matches) == 0:
+            return sought
+
+        print(f'matches: {matches}')
+        result = [ pact.textmatch.ellipsify(m['match'], m['context']) for m in matches ]
+        return '\n\n'.join(result).strip()
+
+    def __try_transcription_search(sought):
+        sought = __search_transcription(sought, 'samples/input.txt')
+        __set_transcription(sought)
+
+    self.stop_current_transcription()
+    self.transcription_textbox.config(bg='white')
+    self.config.transcription_strategy.start(
+        audiosegment = c,
+        on_update_transcription = lambda s: print(s),
+        on_update_progress = lambda n: print(f'{n}%'),
+        on_finished = lambda s: __try_transcription_search(s)
+    )
+
+
 if __name__ == '__main__':
     args = parser.parse_args()
     if args.verbose:
