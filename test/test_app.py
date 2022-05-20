@@ -4,6 +4,7 @@ from tkinter import _tkinter
 from tkinter import ttk
 import os
 import sys
+import shutil
 from tkinter import Tk
 import pact.app
 import time
@@ -314,7 +315,6 @@ class TestApp_session_files(TKinterTestCase):
 
         self.assertTrue(os.path.exists(session_file), 'have file')
 
-
     def test_load_session(self):
         self.app.load_pact_file('test/assets/one-bookmark.pact')
         self.pump_events()
@@ -322,6 +322,33 @@ class TestApp_session_files(TKinterTestCase):
         self.assertEqual(self.app.music_file, 'test/assets/testing.mp3')
         self.assertEqual(self.app.transcription_file, 'test/assets/fake-transcription.txt')
         self.assertEqual(len(self.app.bookmarks), 2, 'sanity check')
+
+
+class TestApp_auto_create_session_files(TKinterTestCase):
+
+    def del_if_exists(self, f):
+        if os.path.exists(f):
+            os.remove(f)
+
+    def test_open_mp3_creates_auto_session_file(self):
+        mp3 = 'test/generated-ignored/testing.mp3'
+        shutil.copyfile('test/assets/testing.mp3', mp3)
+
+        tempfile = 'test/generated-ignored/testing.mp3.temp.pact'
+        self.del_if_exists(tempfile)
+
+        self.assertIsNone(self.app.session_file, 'no session file')
+        self.app.load_mp3(mp3)
+        self.pump_events()
+        self.assertEqual(tempfile, self.app.session_file, 'have session file')
+        self.assertTrue(os.path.exists(tempfile), 'file on disk')
+
+
+    # Tests:
+    # opening a music file creates an auto-pact file in same dir
+    # opening a pact file doesn't create an auto-pact file
+    # open multiple music files creates multiple pact files
+
 
 
 # Additional base tests neede for basic functionality coverage

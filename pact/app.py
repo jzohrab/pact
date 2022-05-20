@@ -340,6 +340,10 @@ class MainWindow:
         self.bookmarks = [ MainWindow.FullTrackBookmark() ]
         self.reload_bookmark_list()
 
+        if self.session_file is None:
+            self.session_file = f"{self.music_file}.temp.pact"
+            self.save_pact_file()
+
 
     def load_transcription(self):
         initialdir = '.'
