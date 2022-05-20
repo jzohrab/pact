@@ -38,8 +38,6 @@ parser.add_argument('-v', dest='verbose', action='store_true', help='Verbose mod
 
 silence_start_re = re.compile(r' silence_start: (?P<start>[0-9]+(\.?[0-9]*))$')
 silence_end_re = re.compile(r' silence_end: (?P<end>[0-9]+(\.?[0-9]*)) ')
-total_duration_re = re.compile(
-    r'size=[^ ]+ time=(?P<hours>[0-9]{2}):(?P<minutes>[0-9]{2}):(?P<seconds>[0-9\.]{5}) bitrate=')
 
 
 def _logged_popen(cmd_line, *args, **kwargs):
@@ -77,7 +75,6 @@ def get_chunk_times(in_filename, silence_threshold, silence_duration):
     for line in lines:
         silence_start_match = silence_start_re.search(line)
         silence_end_match = silence_end_re.search(line)
-        total_duration_match = total_duration_re.search(line)
         if silence_start_match:
             chunk_ends.append(float(silence_start_match.group('start')))
             if len(chunk_starts) == 0:
@@ -85,11 +82,6 @@ def get_chunk_times(in_filename, silence_threshold, silence_duration):
                 chunk_starts.append(0.)
         elif silence_end_match:
             chunk_starts.append(float(silence_end_match.group('end')))
-        elif total_duration_match:
-            hours = int(total_duration_match.group('hours'))
-            minutes = int(total_duration_match.group('minutes'))
-            seconds = float(total_duration_match.group('seconds'))
-            end_time = hours * 3600 + minutes * 60 + seconds
 
     if len(chunk_starts) == 0:
         # No silence found.
