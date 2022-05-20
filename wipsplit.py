@@ -36,9 +36,6 @@ parser.add_argument('--silence-threshold', default=DEFAULT_THRESHOLD, type=int, 
 parser.add_argument('--silence-duration', default=DEFAULT_DURATION, type=float, help='Silence duration')
 parser.add_argument('-v', dest='verbose', action='store_true', help='Verbose mode')
 
-silence_start_re = re.compile(r' silence_start: (?P<start>[0-9]+(\.?[0-9]*))$')
-silence_end_re = re.compile(r' silence_end: (?P<end>[0-9]+(\.?[0-9]*)) ')
-
 
 def _logged_popen(cmd_line, *args, **kwargs):
     logger.debug('Running command: {}'.format(subprocess.list2cmdline(cmd_line)))
@@ -70,18 +67,20 @@ def get_chunk_times(in_filename, silence_threshold, silence_duration):
     lines = outlines
 
     # Chunks start when silence ends, and chunks end when silence starts.
+    silence_start_re = re.compile(r'silence_start: (?P<time>[0-9]+(\.?[0-9]*))$')
+    silence_end_re = re.compile(r'silence_end: (?P<time>[0-9]+(\.?[0-9]*)) ')
     chunk_starts = []
     chunk_ends = []
     for line in lines:
         silence_start_match = silence_start_re.search(line)
         silence_end_match = silence_end_re.search(line)
         if silence_start_match:
-            chunk_ends.append(float(silence_start_match.group('start')))
+            chunk_ends.append(float(silence_start_match.group('time')))
             if len(chunk_starts) == 0:
                 # Started with non-silence.
                 chunk_starts.append(0.)
         elif silence_end_match:
-            chunk_starts.append(float(silence_end_match.group('end')))
+            chunk_starts.append(float(silence_end_match.group('time')))
 
     if len(chunk_starts) == 0:
         # No silence found.
