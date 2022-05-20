@@ -339,7 +339,12 @@ class MainWindow:
 
 
     def load_transcription(self):
-        f = filedialog.askopenfilename(filetypes = (("Text file", "*.txt"),))
+        initialdir = '.'
+        if self.music_file:
+            initialdir = os.path.dirname(self.music_file)
+        f = filedialog.askopenfilename(
+            initialdir = initialdir,
+            filetypes = (("Text file", "*.txt"),))
         if f:
             self._load_transcription(f)
         else:
