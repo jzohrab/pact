@@ -22,13 +22,16 @@ import re
 import subprocess
 import sys
 
+import pact.utils
+import pydub.playback
+
 
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 logger = logging.getLogger(__file__)
 logger.setLevel(logging.INFO)
 
 DEFAULT_DURATION = 0.3
-DEFAULT_THRESHOLD = -30
+DEFAULT_THRESHOLD = -10
 
 parser = argparse.ArgumentParser(description='Split media into separate chunks wherever silence occurs')
 parser.add_argument('--in_filename', default = 'samples/input.mp3', help='Input filename (`-` for stdin)')
@@ -42,10 +45,11 @@ def _logged_popen(cmd_line, *args, **kwargs):
     return subprocess.Popen(cmd_line, *args, **kwargs)
 
 
+# TODO: this belongs in utils
 def get_chunk_times(in_filename, silence_threshold, silence_duration):
     p = _logged_popen(
         (ffmpeg
-            .input(in_filename)
+            .input(in_filename, ss = 0, t = 100)  # HACK SETTING TIME
             .filter('silencedetect', n='{}dB'.format(silence_threshold), d=silence_duration)
             .output('-', format='null')
             .compile()
@@ -63,7 +67,9 @@ def get_chunk_times(in_filename, silence_threshold, silence_duration):
         outlines.append(s)
         print(s)
         sys.stdout.flush()
-    
+
+    ## TODO: combine the regex matching below with the data collection
+    ## above?
     lines = outlines
 
     # Chunks start when silence ends, and chunks end when silence starts.
@@ -112,3 +118,16 @@ if __name__ == '__main__':
     chunk_times = get_chunk_times(in_filename, silence_threshold, silence_duration)
     print(f'Count of chunks: {len(chunk_times)}')
     print(chunk_times[0:10])
+
+    chunk_times = [
+        c for c in chunk_times
+        if (c[1] - c[0] > 0.001)
+    ]
+    print(f'Count of chunks after filter: {len(chunk_times)}')
+    
+    # Now for each chunk, play the segments of the file.
+    for ct in chunk_times[0:10]:
+        print('----')
+        print(ct)
+        seg = pact.utils.audiosegment_from_mp3_time_range(in_filename, ct[0] * 1000.0, ct[1] * 1000.0)
+        pydub.playback.play(seg)
