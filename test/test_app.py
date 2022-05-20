@@ -13,6 +13,14 @@ import time
 
 class TKinterTestCase(unittest.TestCase):
 
+    def del_if_exists(self, f):
+        if os.path.exists(f):
+            os.remove(f)
+
+    def clean_up_temp_files(self):
+        # Some tests open testing.mp3, which creates a temp pact file.
+        self.del_if_exists('test/assets/testing.mp3.temp.pact')
+
     def setUp(self):
         # print('doing main setup')
         self.was_quit = False
@@ -24,6 +32,7 @@ class TKinterTestCase(unittest.TestCase):
         # Test settings: don't play audio!
         self.config.autoplayclips = False
 
+        self.clean_up_temp_files()
         self.app = pact.app.MainWindow(self.root, self.config)
         self.assertIsNone(self.app.music_file, 'Sanity check, nothing loaded at start')
 
@@ -34,6 +43,8 @@ class TKinterTestCase(unittest.TestCase):
 
     def tearDown(self):
         self.childTearDown()
+
+        self.clean_up_temp_files()
 
         if self.root and not self.was_quit:
             self.pump_events()
@@ -326,10 +337,6 @@ class TestApp_session_files(TKinterTestCase):
 
 class TestApp_auto_create_session_files(TKinterTestCase):
 
-    def del_if_exists(self, f):
-        if os.path.exists(f):
-            os.remove(f)
-
     def test_open_mp3_creates_auto_session_file(self):
         mp3 = 'test/generated-ignored/testing.mp3'
         shutil.copyfile('test/assets/testing.mp3', mp3)
@@ -344,11 +351,13 @@ class TestApp_auto_create_session_files(TKinterTestCase):
         self.assertTrue(os.path.exists(tempfile), 'file on disk')
 
     def test_load_session_doesnt_create_auto_session_file(self):
+        tempfile = 'test/assets/testing.mp3.temp.pact'
+        self.del_if_exists(tempfile)
+
         self.app.load_pact_file('test/assets/one-bookmark.pact')
         self.pump_events()
 
         self.assertEqual(self.app.music_file, 'test/assets/testing.mp3')
-        tempfile = 'test/assets/testing.mp3.temp.pact'
         self.assertFalse(os.path.exists(tempfile), 'file should not exist')
 
 
