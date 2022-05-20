@@ -47,18 +47,10 @@ def _logged_popen(cmd_line, *args, **kwargs):
     return subprocess.Popen(cmd_line, *args, **kwargs)
 
 
-def get_chunk_times(in_filename, silence_threshold, silence_duration, start_time=None, end_time=None):
-    input_kwargs = {}
-    if start_time is not None:
-        input_kwargs['ss'] = start_time
-    else:
-        start_time = 0.
-    if end_time is not None:
-        input_kwargs['t'] = end_time - start_time
-
+def get_chunk_times(in_filename, silence_threshold, silence_duration):
     p = _logged_popen(
         (ffmpeg
-            .input(in_filename, **input_kwargs)
+            .input(in_filename)
             .filter('silencedetect', n='{}dB'.format(silence_threshold), d=silence_duration)
             .output('-', format='null')
             .compile()
@@ -83,7 +75,7 @@ def get_chunk_times(in_filename, silence_threshold, silence_duration, start_time
             chunk_ends.append(float(silence_start_match.group('start')))
             if len(chunk_starts) == 0:
                 # Started with non-silence.
-                chunk_starts.append(start_time or 0.)
+                chunk_starts.append(0.)
         elif silence_end_match:
             chunk_starts.append(float(silence_end_match.group('end')))
         elif total_duration_match:
@@ -94,11 +86,11 @@ def get_chunk_times(in_filename, silence_threshold, silence_duration, start_time
 
     if len(chunk_starts) == 0:
         # No silence found.
-        chunk_starts.append(start_time)
+        chunk_starts.append(0.)
 
     if len(chunk_starts) > len(chunk_ends):
         # Finished with non-silence.
-        chunk_ends.append(end_time or 10000000.)
+        chunk_ends.append(10000000.)
 
     return list(zip(chunk_starts, chunk_ends))
 
