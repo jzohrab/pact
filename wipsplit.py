@@ -49,7 +49,7 @@ def _logged_popen(cmd_line, *args, **kwargs):
 def get_chunk_times(in_filename, silence_threshold, silence_duration):
     p = _logged_popen(
         (ffmpeg
-            .input(in_filename, ss = 0, t = 100)  # HACK SETTING TIME
+            .input(in_filename, ss = 0, t = 200)  # HACK SETTING TIME
             .filter('silencedetect', n='{}dB'.format(silence_threshold), d=silence_duration)
             .output('-', format='null')
             .compile()
@@ -73,6 +73,8 @@ def get_chunk_times(in_filename, silence_threshold, silence_duration):
     lines = outlines
 
     # Chunks start when silence ends, and chunks end when silence starts.
+    # ... but setting the chunk end to be at the silence start appears
+    # to cut off the clip -- clips are ending too early.
     timematch = r'(?P<time>[0-9]+(\.?[0-9]*))'
     start_re = re.compile(f'silence_start: {timematch}$')
     end_re = re.compile(f'silence_end: {timematch} ')
@@ -82,16 +84,19 @@ def get_chunk_times(in_filename, silence_threshold, silence_duration):
 
     chunk_starts = []
     chunk_ends = []
+    current_start = 0
     for line in lines:
         start_match = start_re.search(line)
         end_match = end_re.search(line)
         if start_match:
-            chunk_ends.append(time_match(start_match))
+            s = time_match(start_match)
+            chunk_ends.append(s)
             if len(chunk_starts) == 0:
                 # Started with non-silence.
                 chunk_starts.append(0.)
         elif end_match:
-            chunk_starts.append(time_match(end_match))
+            e = time_match(end_match)
+            chunk_starts.append(e)
 
     if len(chunk_starts) == 0:
         # No silence found.
@@ -116,9 +121,28 @@ if __name__ == '__main__':
     silence_duration = args.silence_duration
 
     chunk_times = get_chunk_times(in_filename, silence_threshold, silence_duration)
+    chunk_times = chunk_times[0:5]
     print(f'Count of chunks: {len(chunk_times)}')
-    print(chunk_times[0:10])
+    print(chunk_times)
 
+    # Chunks are getting cut off early, so instead of using the start
+    # and end times, just use the start times (and for the last one,
+    # use the end time plus an arbitrary padding, which will hopefully
+    # prevent it from being cut off).
+    padding = 0.25
+    faketimes = chunk_times
+    lastchunk = chunk_times[-1]
+    faketimes.append((lastchunk[1] + padding, lastchunk[1] + padding))
+    print('fakes:')
+    print(faketimes)
+    newtimes = []
+    for i in range(0, len(faketimes) - 1):
+        newtimes.append((faketimes[i][0], faketimes[i+1][0]))
+
+    print('new:')
+    print(newtimes)
+
+    chunk_times = newtimes
     chunk_times = [
         c for c in chunk_times
         if (c[1] - c[0] > 0.001)
@@ -126,7 +150,7 @@ if __name__ == '__main__':
     print(f'Count of chunks after filter: {len(chunk_times)}')
     
     # Now for each chunk, play the segments of the file.
-    for ct in chunk_times[0:10]:
+    for ct in chunk_times[4:5]:
         print('----')
         print(ct)
         seg = pact.utils.audiosegment_from_mp3_time_range(in_filename, ct[0] * 1000.0, ct[1] * 1000.0)
