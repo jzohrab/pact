@@ -25,6 +25,9 @@ import sys
 import pact.utils
 import pydub.playback
 
+import pact.textmatch
+from pact.plugins.transcription import vosktranscription, unknown
+
 
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 logger = logging.getLogger(__file__)
@@ -112,13 +115,10 @@ def get_chunk_times(in_filename, silence_threshold, silence_duration):
 
 def transcribe(c):
     def __set_transcription(transcription):
-        t = self.transcription_textbox
-        # Weird that it's 1.0 ... ref stackoverflow question 27966626.
-        t.delete(1.0, END)
-        t.insert(1.0, transcription)
+        print(transcription)
 
     def __update_progressbar(n):
-        self.transcription_progress['value'] = n
+        print(f'{n}%')
 
     def __search_transcription(sought, transcription_file):
         if transcription_file is None:
@@ -141,9 +141,9 @@ def transcribe(c):
         sought = __search_transcription(sought, 'samples/input.txt')
         __set_transcription(sought)
 
-    self.stop_current_transcription()
-    self.transcription_textbox.config(bg='white')
-    self.config.transcription_strategy.start(
+    voskmodel = 'model/spanish'
+    ts = vosktranscription.VoskTranscriptionStrategy(voskmodel)
+    ts.start(
         audiosegment = c,
         on_update_transcription = lambda s: print(s),
         on_update_progress = lambda n: print(f'{n}%'),
@@ -191,8 +191,9 @@ if __name__ == '__main__':
     print(f'Count of chunks after filter: {len(chunk_times)}')
     
     # Now for each chunk, play the segments of the file.
-    for ct in chunk_times[4:5]:
+    for ct in chunk_times[0:5]:
         print('----')
         print(ct)
         seg = pact.utils.audiosegment_from_mp3_time_range(in_filename, ct[0] * 1000.0, ct[1] * 1000.0)
+        transcribe(seg)
         pydub.playback.play(seg)
