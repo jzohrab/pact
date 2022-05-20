@@ -134,7 +134,7 @@ def transcribe(c, bookmark):
         if len(matches) == 0:
             return f'(?) {sought}'
 
-        print(f'matches: {matches}')
+        # print(f'matches: {matches}')
         result = [ pact.textmatch.ellipsify(m['match'], m['context']) for m in matches ]
         return '\n\n'.join(result).strip()
 
@@ -191,7 +191,9 @@ if __name__ == '__main__':
         if (c[1] - c[0] > 0.001)
     ]
     print(f'Count of chunks after filter: {len(chunk_times)}')
-    
+
+    allthreads = []
+    allbookmarks = []
     # Now for each chunk, play the segments of the file.
     for ct in chunk_times:
         print('----')
@@ -199,10 +201,16 @@ if __name__ == '__main__':
 
         b = pact.music.Bookmark(ct[0])
         b.clip_bounds_ms = [ ct[0], ct[1] ]
+        allbookmarks.append(b)
 
         seg = pact.utils.audiosegment_from_mp3_time_range(in_filename, ct[0] * 1000.0, ct[1] * 1000.0)
         t = transcribe(seg, b)
         # pydub.playback.play(seg)
+        allthreads.append(t)
+
+    for t in allthreads:
         t.join()
 
+    print('=' * 50)
+    for b in allbookmarks:
         print(b.to_dict())
