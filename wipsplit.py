@@ -149,6 +149,7 @@ def transcribe(c):
         on_update_progress = lambda n: print(f'{n}%'),
         on_finished = lambda s: __try_transcription_search(s)
     )
+    return ts.transcription_thread
 
 
 if __name__ == '__main__':
@@ -195,5 +196,6 @@ if __name__ == '__main__':
         print('----')
         print(ct)
         seg = pact.utils.audiosegment_from_mp3_time_range(in_filename, ct[0] * 1000.0, ct[1] * 1000.0)
-        transcribe(seg)
+        t = transcribe(seg)
         pydub.playback.play(seg)
+        t.join()
