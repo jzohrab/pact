@@ -68,7 +68,7 @@ def get_chunk_times(in_filename, silence_threshold, silence_duration):
     end_re = re.compile(f'silence_end: {timematch} ')
 
     def time_ms(m):
-        return float(m.group('time')) * 1000
+        return round(float(m.group('time')) * 1000)
 
     chunk_starts = []
     chunk_ends = []
@@ -98,6 +98,7 @@ def get_chunk_times(in_filename, silence_threshold, silence_duration):
 
 
 
+### TODO - hide this somewhere, or just delete it.
 def transcribe(c, bookmark, bookmark_done_callback):
     def __set_transcription(transcription):
         bookmark.transcription = transcription
@@ -142,16 +143,15 @@ def transcribe(c, bookmark, bookmark_done_callback):
     return ts.transcription_thread
 
 
-def get_bookmarks(
+def get_corrected_chunk_times(
         in_filename,
         silence_threshold = DEFAULT_THRESHOLD,
-        silence_duration = DEFAULT_DURATION,
-        bookmark_done_callback = None
+        silence_duration = DEFAULT_DURATION
 ):
     chunk_times = get_chunk_times(in_filename, silence_threshold, silence_duration)
     # chunk_times = chunk_times[0:10]
-    print(f'Count of chunks: {len(chunk_times)}')
-    print(chunk_times)
+    # print(f'Count of chunks: {len(chunk_times)}')
+    # print(chunk_times)
 
     # Chunks are getting cut off early, so instead of using the start
     # and end times, just use the start times (and for the last one,
@@ -161,21 +161,31 @@ def get_bookmarks(
     faketimes = chunk_times
     lastchunk = chunk_times[-1]
     faketimes.append((lastchunk[1] + padding, lastchunk[1] + padding))
-    print('fakes:')
-    print(faketimes)
+    # print('fakes:')
+    # print(faketimes)
     newtimes = []
     for i in range(0, len(faketimes) - 1):
         newtimes.append((faketimes[i][0], faketimes[i+1][0]))
 
-    print('new:')
-    print(newtimes)
+    # print('new:')
+    # print(newtimes)
 
     chunk_times = newtimes
     chunk_times = [
         c for c in chunk_times
         if (c[1] - c[0] > 10)
     ]
-    print(f'Count of chunks after filter: {len(chunk_times)}')
+
+    return chunk_times
+
+
+def get_bookmarks(
+        in_filename,
+        silence_threshold = DEFAULT_THRESHOLD,
+        silence_duration = DEFAULT_DURATION,
+        bookmark_done_callback = None
+):
+    chunk_times = get_corrected_chunk_times(in_filename, silence_threshold, silence_duration)
 
     allthreads = []
     allbookmarks = []
@@ -216,11 +226,18 @@ if __name__ == '__main__':
         logging.basicConfig(level=logging.DEBUG, format='%(levels): %(message)s')
         logger.setLevel(logging.DEBUG)
 
-    bookmarks = get_bookmarks(
+    ct = get_corrected_chunk_times(
         args.in_filename,
         args.silence_threshold,
         args.silence_duration
     )
-    print('=' * 50)
-    for b in bookmarks:
-        print(b.to_dict())
+    durations = [
+        c[1] - c[0]
+        for c in ct
+    ]
+
+    print(f'count of chunks: {len(ct)}')
+    print(f'min duration: {min(durations)}')
+
+    for c in ct[0:10]:
+        print(c)
