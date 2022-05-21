@@ -327,10 +327,18 @@ class MainWindow:
             self.session_file = None
             self.load_mp3(f)
 
-            bookmarks = pact.wipsplit.get_bookmarks(f)
-            for b in bookmarks:
+            def __done_b(b):
+                print('got it! was called.  Adding to list:')
                 print(b.to_dict())
                 self.add_bookmark(b)
+                self.window.update()
+                print('-' * 50)
+                # sys.exit(1)
+
+            bookmarks = pact.wipsplit.get_bookmarks(in_filename = f, bookmark_done_callback = lambda b: __done_b(b))
+            # for b in bookmarks:
+            #     print(b.to_dict())
+            #     self.add_bookmark(b)
         else:
             print("no file?")
 

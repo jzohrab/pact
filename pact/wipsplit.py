@@ -98,7 +98,7 @@ def get_chunk_times(in_filename, silence_threshold, silence_duration):
 
 
 
-def transcribe(c, bookmark):
+def transcribe(c, bookmark, bookmark_done_callback):
     def __set_transcription(transcription):
         bookmark.transcription = transcription
 
@@ -123,28 +123,33 @@ def transcribe(c, bookmark):
         result = [ pact.textmatch.ellipsify(m['match'], m['context']) for m in matches ]
         return '\n\n'.join(result).strip()
 
-    def __try_transcription_search(sought):
+    def __try_transcription_search(sought, ts):
         sought = __search_transcription(sought, 'samples/input.txt')
         __set_transcription(sought)
+        print(bookmark.display())
+        bookmark_done_callback(bookmark)
+        ts.stop()
 
     voskmodel = 'model/spanish'
     ts = vosktranscription.VoskTranscriptionStrategy(voskmodel)
     ts.start(
         audiosegment = c,
         on_update_transcription = lambda s: __set_transcription(s),
-        on_update_progress = lambda n: None,
-        on_finished = lambda s: __try_transcription_search(s)
+        on_update_progress = lambda n: print(f'{n}%'),
+        on_finished = lambda s: __try_transcription_search(s, ts),
+        on_daemon_thread = False
     )
     return ts.transcription_thread
 
 
 def get_bookmarks(
-    in_filename,
-    silence_threshold = DEFAULT_THRESHOLD,
-    silence_duration = DEFAULT_DURATION
+        in_filename,
+        silence_threshold = DEFAULT_THRESHOLD,
+        silence_duration = DEFAULT_DURATION,
+        bookmark_done_callback = None
 ):
     chunk_times = get_chunk_times(in_filename, silence_threshold, silence_duration)
-    chunk_times = chunk_times[0:3]
+    # chunk_times = chunk_times[0:10]
     print(f'Count of chunks: {len(chunk_times)}')
     print(chunk_times)
 
@@ -168,7 +173,7 @@ def get_bookmarks(
     chunk_times = newtimes
     chunk_times = [
         c for c in chunk_times
-        if (c[1] - c[0] > 0.001)
+        if (c[1] - c[0] > 10)
     ]
     print(f'Count of chunks after filter: {len(chunk_times)}')
 
@@ -184,12 +189,13 @@ def get_bookmarks(
         allbookmarks.append(b)
 
         seg = pact.utils.audiosegment_from_mp3_time_range(in_filename, ct[0], ct[1])
-        t = transcribe(seg, b)
+        transcribe(seg, b, bookmark_done_callback)
         # pydub.playback.play(seg)
-        allthreads.append(t)
+        # allthreads.append(t)
+        # t.join()
 
-    for t in allthreads:
-        t.join()
+    # for t in allthreads:
+    #     t.join()
 
     return allbookmarks
 
