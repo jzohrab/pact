@@ -67,8 +67,8 @@ def get_chunk_times(in_filename, silence_threshold, silence_duration):
     start_re = re.compile(f'silence_start: {timematch}$')
     end_re = re.compile(f'silence_end: {timematch} ')
 
-    def time_match(m):
-        return float(m.group('time'))
+    def time_ms(m):
+        return float(m.group('time')) * 1000
 
     chunk_starts = []
     chunk_ends = []
@@ -77,13 +77,13 @@ def get_chunk_times(in_filename, silence_threshold, silence_duration):
         start_match = start_re.search(line)
         end_match = end_re.search(line)
         if start_match:
-            s = time_match(start_match)
+            s = time_ms(start_match)
             chunk_ends.append(s)
             if len(chunk_starts) == 0:
                 # Started with non-silence.
                 chunk_starts.append(0.)
         elif end_match:
-            e = time_match(end_match)
+            e = time_ms(end_match)
             chunk_starts.append(e)
 
     if len(chunk_starts) == 0:
@@ -92,7 +92,7 @@ def get_chunk_times(in_filename, silence_threshold, silence_duration):
 
     if len(chunk_starts) > len(chunk_ends):
         # Finished with non-silence.
-        chunk_ends.append(10000000.)
+        chunk_ends.append(10000000. * 1000)
 
     return list(zip(chunk_starts, chunk_ends))
 
@@ -144,7 +144,7 @@ def get_bookmarks(
     silence_duration = DEFAULT_DURATION
 ):
     chunk_times = get_chunk_times(in_filename, silence_threshold, silence_duration)
-    chunk_times = chunk_times[0:5]
+    chunk_times = chunk_times[0:3]
     print(f'Count of chunks: {len(chunk_times)}')
     print(chunk_times)
 
@@ -183,7 +183,7 @@ def get_bookmarks(
         b.clip_bounds_ms = [ ct[0], ct[1] ]
         allbookmarks.append(b)
 
-        seg = pact.utils.audiosegment_from_mp3_time_range(in_filename, ct[0] * 1000.0, ct[1] * 1000.0)
+        seg = pact.utils.audiosegment_from_mp3_time_range(in_filename, ct[0], ct[1])
         t = transcribe(seg, b)
         # pydub.playback.play(seg)
         allthreads.append(t)
@@ -197,7 +197,7 @@ def get_bookmarks(
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Split media into separate chunks wherever silence occurs')
-    parser.add_argument('--in_filename', default = 'samples/input.mp3', help='Input filename (`-` for stdin)')
+    parser.add_argument('in_filename', help='Input filename (`-` for stdin)')
     parser.add_argument('--silence-threshold', default=DEFAULT_THRESHOLD, type=int, help='Silence threshold (in dB)')
     parser.add_argument('--silence-duration', default=DEFAULT_DURATION, type=float, help='Silence duration')
     parser.add_argument('-v', dest='verbose', action='store_true', help='Verbose mode')

@@ -27,7 +27,7 @@ from pact.utils import TimeUtils
 from pact._version import __version__
 import pact.textmatch
 from pact.plugins.transcription import vosktranscription, unknown
-
+import pact.wipsplit
 
 class Config(configparser.ConfigParser):
 
@@ -326,6 +326,11 @@ class MainWindow:
             # No longer using existing session.
             self.session_file = None
             self.load_mp3(f)
+
+            bookmarks = pact.wipsplit.get_bookmarks(f)
+            for b in bookmarks:
+                print(b.to_dict())
+                self.add_bookmark(b)
         else:
             print("no file?")
 
