@@ -130,6 +130,19 @@ def get_corrected_chunk_times(
         min_duration_ms = 5000.0
 ):
     chunk_starts = get_chunk_starts(in_filename, silence_threshold, silence_duration)
+
+    # On my system at least, ffmpeg appears to find the start times a
+    # shade too late (i.e., the sound is clipped at the start if I
+    # start playing exactly where it ends).  I can't sort out why
+    # given what I currently know, so arbitrarily shift the start
+    # times back a few hundred ms.  It will give a small bit of noise,
+    # but that's fine.
+    shift_by_ms = 200
+    chunk_starts = [
+        c - shift_by_ms if c > shift_by_ms else c
+        for c
+        in chunk_starts
+    ]
     chunk_times = pact.utils.sensible_start_times(chunk_starts, min_duration_ms)
 
     print(f'Initial split chunk count: {len(chunk_starts)}')
