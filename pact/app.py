@@ -534,7 +534,6 @@ class BookmarkWindow(object):
         self.config = config
         self.bookmark = bookmark
         self.music_file = music_file
-        self.clip_start_times = clip_start_times
         self.song_length_ms = song_length_ms
         self.transcription_file = transcription_file
         self.on_close = on_close
@@ -546,6 +545,12 @@ class BookmarkWindow(object):
         self.reposition_popup(parent, 50, 50)
 
         self.from_val, self.to_val = self.get_slider_from_to(bookmark, allbookmarks)
+
+        # List of the "clip start times" within the range.
+        self.clip_start_times = [
+            t for t in clip_start_times
+            if t >= self.from_val and t <= self.to_val
+        ]
 
         # Pre-calc graphing data.  If from_val or to_val change, must recalc.
         self.signal_plot_data = self.get_signal_plot_data(self.from_val, self.to_val)
@@ -1043,23 +1048,8 @@ class BookmarkWindow(object):
         time, signal = self.signal_plot_data
 
         plot1.plot(time, signal)
-        print(f'from = {self.from_val}, to = {self.to_val}')
-        print(f'lim: {plot1.axes.get_xlim()}')
-        print(f'time {time[0]} to {time[-1]} ???')
-        myline = (time[0] + time[-1]) / 2.0
-        # myfrom, myto = (-2.0003798185941046, 42.00797619047619)
-        # myfrom = 1126068
-        # myto = 1166068
 
-        xmin, xmax = plot1.axes.get_xlim()
-        myline = (xmin + xmax) / 2.0
-        myline = 1150000
-        # only one line may be specified; full height
-        highlight_times = [
-            t for t in self.clip_start_times
-            if t >= self.from_val and t <= self.to_val
-        ]
-        for t in highlight_times:
+        for t in self.clip_start_times:
             plot1.axvline(x=t, color='red')
 
         canvas = FigureCanvasTkAgg(fig, master = frame)
