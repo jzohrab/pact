@@ -1055,8 +1055,12 @@ class BookmarkWindow(object):
         myline = (xmin + xmax) / 2.0
         myline = 1150000
         # only one line may be specified; full height
-        for i in [*range(int(time[0]), int(time[-1]), 5000)]:
-            plot1.axvline(x=i, color='red')
+        highlight_times = [
+            t for t in self.clip_start_times
+            if t >= self.from_val and t <= self.to_val
+        ]
+        for t in highlight_times:
+            plot1.axvline(x=t, color='red')
 
         canvas = FigureCanvasTkAgg(fig, master = frame)
 
