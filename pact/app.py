@@ -328,11 +328,11 @@ class MainWindow:
             self.load_mp3(f)
 
             def __done_b(b):
-                print('got it! was called.  Adding to list:')
-                print(b.to_dict())
+                # print('got it! was called.  Adding to list:')
+                # print(b.to_dict())
                 self.add_bookmark(b)
-                self.window.update()
-                print('-' * 50)
+                # self.window.update()
+                # print('-' * 50)
                 # sys.exit(1)
 
             bookmarks = pact.wipsplit.get_bookmarks(in_filename = f, bookmark_done_callback = lambda b: __done_b(b))

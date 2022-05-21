@@ -37,7 +37,7 @@ def _logged_popen(cmd_line, *args, **kwargs):
 def get_chunk_times(in_filename, silence_threshold, silence_duration):
     p = _logged_popen(
         (ffmpeg
-            .input(in_filename, ss = 0, t = 200)  # HACK SETTING TIME
+            .input(in_filename)  # , ss = 0, t = 200)  # HACK SETTING TIME
             .filter('silencedetect', n='{}dB'.format(silence_threshold), d=silence_duration)
             .output('-', format='null')
             .compile()
@@ -181,15 +181,18 @@ def get_bookmarks(
     allbookmarks = []
     # Now for each chunk, play the segments of the file.
     for ct in chunk_times:
-        print('----')
-        print(ct)
+        # print('----')
+        # print(ct)
 
         b = pact.music.Bookmark(ct[0])
         b.clip_bounds_ms = [ ct[0], ct[1] ]
+        bookmark_done_callback(b)
         allbookmarks.append(b)
 
-        seg = pact.utils.audiosegment_from_mp3_time_range(in_filename, ct[0], ct[1])
-        transcribe(seg, b, bookmark_done_callback)
+        ## DISABLE transcription for now, just set the bounds.
+        # seg = pact.utils.audiosegment_from_mp3_time_range(in_filename, ct[0], ct[1])
+        # transcribe(seg, b, bookmark_done_callback)
+
         # pydub.playback.play(seg)
         # allthreads.append(t)
         # t.join()
