@@ -1,16 +1,3 @@
-# work-in-progress, splitting a file.
-
-#### import ffmpeg
-#### ffmpeg_cmd = (
-####     ffmpeg
-####     .input(path_to_mp3)
-####     .filter('silencedetect', d=0.25)
-#### )
-#### # print('args:')
-#### # print(ffmpeg_cmd.get_args())
-#### ffmpeg_cmd.run()
-
-
 # MASSIVE steal from
 # https://raw.githubusercontent.com/kkroening/ffmpeg-python/master/examples/split_silence.py
 
@@ -154,7 +141,14 @@ def transcribe(c, bookmark):
     return ts.transcription_thread
 
 
+def get_bookmarks():
+    pass
+    
 if __name__ == '__main__':
+
+    # Can run this from root dir like:
+    # python -m pact.wipsplit
+
     args = parser.parse_args()
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG, format='%(levels): %(message)s')
