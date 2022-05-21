@@ -34,7 +34,7 @@ def _logged_popen(cmd_line, *args, **kwargs):
 
 
 # TODO: this belongs in utils
-def get_chunk_times(in_filename, silence_threshold, silence_duration):
+def get_chunk_starts(in_filename, silence_threshold, silence_duration):
     p = _logged_popen(
         (ffmpeg
             .input(in_filename)  # , ss = 0, t = 200)  # HACK SETTING TIME
@@ -60,41 +60,21 @@ def get_chunk_times(in_filename, silence_threshold, silence_duration):
     ## above?
     lines = outlines
 
-    # Chunks start when silence ends, and chunks end when silence starts.
-    # ... but setting the chunk end to be at the silence start appears
-    # to cut off the clip -- clips are ending too early.
+    # Chunks start when silence ends.
     timematch = r'(?P<time>[0-9]+(\.?[0-9]*))'
-    start_re = re.compile(f'silence_start: {timematch}$')
     end_re = re.compile(f'silence_end: {timematch} ')
 
     def time_ms(m):
         return round(float(m.group('time')) * 1000)
 
-    chunk_starts = []
-    chunk_ends = []
-    current_start = 0
+    chunk_starts = [0]
     for line in lines:
-        start_match = start_re.search(line)
         end_match = end_re.search(line)
-        if start_match:
-            s = time_ms(start_match)
-            chunk_ends.append(s)
-            if len(chunk_starts) == 0:
-                # Started with non-silence.
-                chunk_starts.append(0.)
-        elif end_match:
+        if end_match:
             e = time_ms(end_match)
             chunk_starts.append(e)
 
-    if len(chunk_starts) == 0:
-        # No silence found.
-        chunk_starts.append(0.)
-
-    if len(chunk_starts) > len(chunk_ends):
-        # Finished with non-silence.
-        chunk_ends.append(10000000. * 1000)
-
-    return list(zip(chunk_starts, chunk_ends))
+    return chunk_starts
 
 
 
@@ -148,29 +128,21 @@ def get_corrected_chunk_times(
         silence_threshold = DEFAULT_THRESHOLD,
         silence_duration = DEFAULT_DURATION
 ):
-    chunk_times = get_chunk_times(in_filename, silence_threshold, silence_duration)
+    chunk_starts = get_chunk_starts(in_filename, silence_threshold, silence_duration)
     # chunk_times = chunk_times[0:10]
     # print(f'Count of chunks: {len(chunk_times)}')
     # print(chunk_times)
 
-    # Chunks are getting cut off early, so instead of using the start
-    # and end times, just use the start times (and for the last one,
-    # use the end time plus an arbitrary padding, which will hopefully
-    # prevent it from being cut off).
-    padding = 0.25
-    faketimes = chunk_times
-    lastchunk = chunk_times[-1]
-    faketimes.append((lastchunk[1] + padding, lastchunk[1] + padding))
-    # print('fakes:')
-    # print(faketimes)
-    newtimes = []
-    for i in range(0, len(faketimes) - 1):
-        newtimes.append((faketimes[i][0], faketimes[i+1][0]))
+    # Convert to durations, use consecutive start times.
+    # add a fake ending time to make a final chunk.
+    fakestarts = chunk_starts
+    lastchunk = chunk_starts[-1]
+    # TODO: need to get the actual clip length for this final duration
+    fakestarts.append(lastchunk + 60 * 1000)
+    chunk_times = []
+    for i in range(0, len(fakestarts) - 1):
+        chunk_times.append((fakestarts[i], fakestarts[i+1]))
 
-    # print('new:')
-    # print(newtimes)
-
-    chunk_times = newtimes
     chunk_times = [
         c for c in chunk_times
         if (c[1] - c[0] > 10)
