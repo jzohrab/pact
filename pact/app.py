@@ -77,6 +77,7 @@ class MainWindow:
 
         self.config = config
         self.music_file = None
+        self.clip_start_times = None
         self.song_length_ms = 0
         self.transcription_file = None
 
@@ -326,19 +327,10 @@ class MainWindow:
             # No longer using existing session.
             self.session_file = None
             self.load_mp3(f)
-
-            def __done_b(b):
-                # print('got it! was called.  Adding to list:')
-                # print(b.to_dict())
-                self.add_bookmark(b)
-                # self.window.update()
-                # print('-' * 50)
-                # sys.exit(1)
-
-            bookmarks = pact.wipsplit.get_bookmarks(in_filename = f, bookmark_done_callback = lambda b: __done_b(b), min_duration_ms = 2000.0)
-            # for b in bookmarks:
-            #     print(b.to_dict())
-            #     self.add_bookmark(b)
+            self.clip_start_times = pact.wipsplit.get_corrected_chunk_times(
+                in_filename = f,
+                min_duration_ms = 2000.0)
+            self.save_pact_file()
         else:
             print("no file?")
 
@@ -409,6 +401,7 @@ class MainWindow:
 
         def __init__(self):
             self.music_file = None
+            self.clip_start_times = None
             self.transcription_file = None
             self.music_player_pos = None
             self.bookmarks = []
@@ -417,6 +410,7 @@ class MainWindow:
         def from_app(mainwindow):
             s = MainWindow.ApplicationState()
             s.music_file = mainwindow.music_file
+            s.clip_start_times = mainwindow.clip_start_times
             s.transcription_file = mainwindow.transcription_file
             s.music_player_pos = mainwindow.music_player.get_pos()
             s.bookmarks = mainwindow.bookmarks
@@ -429,6 +423,7 @@ class MainWindow:
             """For serialization."""
             return {
                 'music_file': self.music_file,
+                'clip_start_times': self.clip_start_times,
                 'transcription_file': self.transcription_file,
                 'music_player_pos': self.music_player_pos,
                 'bookmarks': [ b.to_dict() for b in self.bookmarks ]
@@ -438,6 +433,7 @@ class MainWindow:
         def from_dict(d):
             s = MainWindow.ApplicationState()
             s.music_file = d['music_file']
+            s.clip_start_times = d.get('clip_start_times', None)
             s.transcription_file = d['transcription_file']
             s.music_player_pos = d['music_player_pos']
             s.bookmarks = [ pact.music.Bookmark.from_dict(bd) for bd in d['bookmarks'] ]
