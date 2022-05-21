@@ -838,10 +838,7 @@ class BookmarkWindow(object):
 
     def previous_start(self):
         curr_pos = self.slider_var.get()
-        print(f'curr_pos = {curr_pos}')
-        print(f'clip_start_times = {self.clip_start_times}')
         c = [p for p in self.clip_start_times if p < curr_pos]
-        print(f'c = {c}')
         if len(c) == 0:
             return curr_pos
         return max(c)
