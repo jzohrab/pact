@@ -136,7 +136,8 @@ def transcribe(c, bookmark, bookmark_done_callback):
 def get_corrected_chunk_times(
         in_filename,
         silence_threshold = DEFAULT_THRESHOLD,
-        silence_duration = DEFAULT_DURATION
+        silence_duration = DEFAULT_DURATION,
+        min_duration_ms = 1000.0
 ):
     chunk_starts = get_chunk_starts(in_filename, silence_threshold, silence_duration)
     # chunk_times = chunk_times[0:10]
@@ -155,7 +156,7 @@ def get_corrected_chunk_times(
 
     chunk_times = [
         c for c in chunk_times
-        if (c[1] - c[0] > 10)
+        if (c[1] - c[0] > min_duration_ms)
     ]
 
     return chunk_times
@@ -221,9 +222,9 @@ if __name__ == '__main__':
     print(f'count of chunks: {len(ct)}')
     print(f'min duration: {min(durations)}')
 
-    for c in ct[0:10]:
-        print(c)
+    starts = [c[0] for c in ct]
+    for c in starts[0:10]:
+        print(pact.utils.TimeUtils.time_string(c))
     print('...')
-    for c in ct[-11:-1]:
-        print(c)
-        print(pact.utils.TimeUtils.time_string(c[1]))
+    for c in starts[-11:-1]:
+        print(pact.utils.TimeUtils.time_string(c))
