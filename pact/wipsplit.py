@@ -1,3 +1,6 @@
+# Can run this from root dir like:
+# python -m pact.wipsplit
+
 # MASSIVE steal from
 # https://raw.githubusercontent.com/kkroening/ffmpeg-python/master/examples/split_silence.py
 
@@ -23,12 +26,6 @@ logger.setLevel(logging.INFO)
 
 DEFAULT_DURATION = 0.3
 DEFAULT_THRESHOLD = -10
-
-parser = argparse.ArgumentParser(description='Split media into separate chunks wherever silence occurs')
-parser.add_argument('--in_filename', default = 'samples/input.mp3', help='Input filename (`-` for stdin)')
-parser.add_argument('--silence-threshold', default=DEFAULT_THRESHOLD, type=int, help='Silence threshold (in dB)')
-parser.add_argument('--silence-duration', default=DEFAULT_DURATION, type=float, help='Silence duration')
-parser.add_argument('-v', dest='verbose', action='store_true', help='Verbose mode')
 
 
 def _logged_popen(cmd_line, *args, **kwargs):
@@ -141,23 +138,11 @@ def transcribe(c, bookmark):
     return ts.transcription_thread
 
 
-def get_bookmarks():
-    pass
-    
-if __name__ == '__main__':
-
-    # Can run this from root dir like:
-    # python -m pact.wipsplit
-
-    args = parser.parse_args()
-    if args.verbose:
-        logging.basicConfig(level=logging.DEBUG, format='%(levels): %(message)s')
-        logger.setLevel(logging.DEBUG)
-
-    in_filename = args.in_filename
-    silence_threshold = args.silence_threshold
-    silence_duration = args.silence_duration
-
+def get_bookmarks(
+    in_filename,
+    silence_threshold = DEFAULT_THRESHOLD,
+    silence_duration = DEFAULT_DURATION
+):
     chunk_times = get_chunk_times(in_filename, silence_threshold, silence_duration)
     chunk_times = chunk_times[0:5]
     print(f'Count of chunks: {len(chunk_times)}')
@@ -206,6 +191,27 @@ if __name__ == '__main__':
     for t in allthreads:
         t.join()
 
+    return allbookmarks
+
+
+if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser(description='Split media into separate chunks wherever silence occurs')
+    parser.add_argument('--in_filename', default = 'samples/input.mp3', help='Input filename (`-` for stdin)')
+    parser.add_argument('--silence-threshold', default=DEFAULT_THRESHOLD, type=int, help='Silence threshold (in dB)')
+    parser.add_argument('--silence-duration', default=DEFAULT_DURATION, type=float, help='Silence duration')
+    parser.add_argument('-v', dest='verbose', action='store_true', help='Verbose mode')
+
+    args = parser.parse_args()
+    if args.verbose:
+        logging.basicConfig(level=logging.DEBUG, format='%(levels): %(message)s')
+        logger.setLevel(logging.DEBUG)
+
+    bookmarks = get_bookmarks(
+        args.in_filename,
+        args.silence_threshold,
+        args.silence_duration
+    )
     print('=' * 50)
-    for b in allbookmarks:
+    for b in bookmarks:
         print(b.to_dict())
