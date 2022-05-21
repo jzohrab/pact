@@ -335,7 +335,7 @@ class MainWindow:
                 # print('-' * 50)
                 # sys.exit(1)
 
-            bookmarks = pact.wipsplit.get_bookmarks(in_filename = f, bookmark_done_callback = lambda b: __done_b(b))
+            bookmarks = pact.wipsplit.get_bookmarks(in_filename = f, bookmark_done_callback = lambda b: __done_b(b), min_duration_ms = 2000.0)
             # for b in bookmarks:
             #     print(b.to_dict())
             #     self.add_bookmark(b)

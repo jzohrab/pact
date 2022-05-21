@@ -142,7 +142,7 @@ def anki_card_export(
     return r
 
 
-def compress_array_of_start_times(start_times, min_duration):
+def sensible_start_times(start_times, min_duration):
     """Splitting an mp3 with ffmpeg can result in very short clips; too
     short to be practical.  For example, you might end up with clips
     with the following start times (seconds):

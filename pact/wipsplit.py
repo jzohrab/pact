@@ -63,8 +63,6 @@ def get_chunk_starts(in_filename, silence_threshold, silence_duration):
     # Chunks start when silence ends.
     timematch = r'(?P<time>[0-9]+(\.?[0-9]*))'
     end_re = re.compile(f'silence_end: {timematch} ')
-    duration_re = re.compile(
-        r'size=[^ ]+ time=(?P<hours>[0-9]{2}):(?P<minutes>[0-9]{2}):(?P<seconds>[0-9\.]{5}) bitrate=')
 
     def time_ms(m):
         return round(float(m.group('time')) * 1000)
@@ -72,18 +70,10 @@ def get_chunk_starts(in_filename, silence_threshold, silence_duration):
     chunk_starts = [0]
     for line in lines:
         end_match = end_re.search(line)
-        duration_match = duration_re.search(line)
         if end_match:
             e = time_ms(end_match)
             chunk_starts.append(e)
-        elif duration_match:
-            hours = int(duration_match.group('hours'))
-            minutes = int(duration_match.group('minutes'))
-            seconds = float(duration_match.group('seconds'))
-            end_s = hours * 3600 + minutes * 60 + seconds
-            chunk_starts.append(end_s * 1000.0)
 
-    chunk_starts.sort()
     return chunk_starts
 
 
@@ -140,22 +130,10 @@ def get_corrected_chunk_times(
         min_duration_ms = 5000.0
 ):
     chunk_starts = get_chunk_starts(in_filename, silence_threshold, silence_duration)
-    # chunk_times = chunk_times[0:10]
-    # print(f'Count of chunks: {len(chunk_times)}')
-    # print(chunk_times)
+    chunk_times = pact.utils.sensible_start_times(chunk_starts, min_duration_ms)
 
-    # Note that chunk_starts 's last entry is the end of the file,
-    # it's like an EOF marker, so can use it when determining the
-    # actual starts we need.
-
-    chunk_times = []
-    for i in range(0, len(chunk_starts) - 1):
-        chunk_times.append((chunk_starts[i], chunk_starts[i+1]))
-
-    chunk_times = [
-        c for c in chunk_times
-        if (c[1] - c[0] > min_duration_ms)
-    ]
+    print(f'Initial split chunk count: {len(chunk_starts)}')
+    print(f'cleaned up chunk count: {len(chunk_times)}')
 
     return chunk_times
 
@@ -164,9 +142,10 @@ def get_bookmarks(
         in_filename,
         silence_threshold = DEFAULT_THRESHOLD,
         silence_duration = DEFAULT_DURATION,
+        min_duration_ms = 2000.0,
         bookmark_done_callback = None
 ):
-    chunk_times = get_corrected_chunk_times(in_filename, silence_threshold, silence_duration)
+    chunk_times = get_corrected_chunk_times(in_filename, silence_threshold, silence_duration, min_duration_ms)
 
     allthreads = []
     allbookmarks = []
@@ -175,8 +154,8 @@ def get_bookmarks(
         # print('----')
         # print(ct)
 
-        b = pact.music.Bookmark(ct[0])
-        b.clip_bounds_ms = [ ct[0], ct[1] ]
+        b = pact.music.Bookmark(ct)
+        # b.clip_bounds_ms = [ ct[0], ct[1] ]
         bookmark_done_callback(b)
         allbookmarks.append(b)
 
@@ -213,16 +192,15 @@ if __name__ == '__main__':
         args.silence_duration
     )
     durations = [
-        c[1] - c[0]
-        for c in ct
+        ct[i + 1] - ct[i]
+        for i in range(0, len(ct) - 1)
     ]
 
     print(f'count of chunks: {len(ct)}')
     print(f'min duration: {min(durations)}')
 
-    starts = [c[0] for c in ct]
-    for c in starts[0:10]:
+    for c in ct[0:10]:
         print(pact.utils.TimeUtils.time_string(c))
     print('...')
-    for c in starts[-11:-1]:
+    for c in ct[-11:-1]:
         print(pact.utils.TimeUtils.time_string(c))
