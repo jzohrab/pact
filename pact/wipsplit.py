@@ -63,6 +63,8 @@ def get_chunk_starts(in_filename, silence_threshold, silence_duration):
     # Chunks start when silence ends.
     timematch = r'(?P<time>[0-9]+(\.?[0-9]*))'
     end_re = re.compile(f'silence_end: {timematch} ')
+    duration_re = re.compile(
+        r'size=[^ ]+ time=(?P<hours>[0-9]{2}):(?P<minutes>[0-9]{2}):(?P<seconds>[0-9\.]{5}) bitrate=')
 
     def time_ms(m):
         return round(float(m.group('time')) * 1000)
@@ -70,10 +72,18 @@ def get_chunk_starts(in_filename, silence_threshold, silence_duration):
     chunk_starts = [0]
     for line in lines:
         end_match = end_re.search(line)
+        duration_match = duration_re.search(line)
         if end_match:
             e = time_ms(end_match)
             chunk_starts.append(e)
+        elif duration_match:
+            hours = int(duration_match.group('hours'))
+            minutes = int(duration_match.group('minutes'))
+            seconds = float(duration_match.group('seconds'))
+            end_s = hours * 3600 + minutes * 60 + seconds
+            chunk_starts.append(end_s * 1000.0)
 
+    chunk_starts.sort()
     return chunk_starts
 
 
@@ -133,15 +143,15 @@ def get_corrected_chunk_times(
     # print(f'Count of chunks: {len(chunk_times)}')
     # print(chunk_times)
 
+    # Note that chunk_starts 's last entry is the end of the file,
+    # it's like an EOF marker, so can use it when determining the
+    # actual starts we need.
+
     # Convert to durations, use consecutive start times.
     # add a fake ending time to make a final chunk.
-    fakestarts = chunk_starts
-    lastchunk = chunk_starts[-1]
-    # TODO: need to get the actual clip length for this final duration
-    fakestarts.append(lastchunk + 60 * 1000)
     chunk_times = []
-    for i in range(0, len(fakestarts) - 1):
-        chunk_times.append((fakestarts[i], fakestarts[i+1]))
+    for i in range(0, len(chunk_starts) - 1):
+        chunk_times.append((chunk_starts[i], chunk_starts[i+1]))
 
     chunk_times = [
         c for c in chunk_times
@@ -213,3 +223,7 @@ if __name__ == '__main__':
 
     for c in ct[0:10]:
         print(c)
+    print('...')
+    for c in ct[-11:-1]:
+        print(c)
+        print(pact.utils.TimeUtils.time_string(c[1]))
