@@ -210,6 +210,7 @@ class MainWindow:
             bookmark = b,
             allbookmarks = self.bookmarks,
             music_file = self.music_file,
+            clip_start_times = self.clip_start_times,
             song_length_ms = self.song_length_ms,
             transcription_file = self.transcription_file,
             on_close = lambda: self.popup_clip_window_closed(i)
@@ -327,10 +328,6 @@ class MainWindow:
             # No longer using existing session.
             self.session_file = None
             self.load_mp3(f)
-            self.clip_start_times = pact.wipsplit.get_corrected_chunk_times(
-                in_filename = f,
-                min_duration_ms = 2000.0)
-            self.save_pact_file()
         else:
             print("no file?")
 
@@ -344,6 +341,11 @@ class MainWindow:
 
         self.music_file = f
         self.set_title()
+
+        if self.clip_start_times is None:
+            self.clip_start_times = pact.wipsplit.get_corrected_chunk_times(
+                in_filename = f,
+                min_duration_ms = 2000.0)
 
         self.music_player.load_song(f, self.song_length_ms)
         self.bookmarks = [ MainWindow.FullTrackBookmark() ]
@@ -511,8 +513,10 @@ Update '{fieldname}' in the session file and try again."""
             return
 
         self.session_file = sessionfile
+        self.clip_start_times = appstate.clip_start_times
 
         self.load_mp3(appstate.music_file)
+
         self._load_transcription(appstate.transcription_file)
         self.music_player.reposition(appstate.music_player_pos)
         self.bookmarks = appstate.bookmarks
@@ -526,10 +530,11 @@ Update '{fieldname}' in the session file and try again."""
 class BookmarkWindow(object):
     """Bookmark / clip editing window."""
 
-    def __init__(self, parent, config, bookmark, allbookmarks, music_file, song_length_ms, transcription_file, on_close):
+    def __init__(self, parent, config, bookmark, allbookmarks, music_file, clip_start_times, song_length_ms, transcription_file, on_close):
         self.config = config
         self.bookmark = bookmark
         self.music_file = music_file
+        self.clip_start_times = clip_start_times
         self.song_length_ms = song_length_ms
         self.transcription_file = transcription_file
         self.on_close = on_close
@@ -1012,8 +1017,8 @@ class BookmarkWindow(object):
                 raw.close()
 
         time = np.linspace(
-            0, # start
-            len(signal) / f_rate,
+            from_val, # start
+            to_val,
             num = len(signal)
         )
         return (time, signal)
@@ -1036,8 +1041,23 @@ class BookmarkWindow(object):
         plot1.axes.get_yaxis().set_visible(False)
 
         time, signal = self.signal_plot_data
-        plot1.plot(signal)
-        
+
+        plot1.plot(time, signal)
+        print(f'from = {self.from_val}, to = {self.to_val}')
+        print(f'lim: {plot1.axes.get_xlim()}')
+        print(f'time {time[0]} to {time[-1]} ???')
+        myline = (time[0] + time[-1]) / 2.0
+        # myfrom, myto = (-2.0003798185941046, 42.00797619047619)
+        # myfrom = 1126068
+        # myto = 1166068
+
+        xmin, xmax = plot1.axes.get_xlim()
+        myline = (xmin + xmax) / 2.0
+        myline = 1150000
+        # only one line may be specified; full height
+        for i in [*range(int(time[0]), int(time[-1]), 5000)]:
+            plot1.axvline(x=i, color='red')
+
         canvas = FigureCanvasTkAgg(fig, master = frame)
 
         return (canvas.get_tk_widget(), fig)
