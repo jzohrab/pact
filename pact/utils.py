@@ -140,3 +140,35 @@ def anki_card_export(
         raise RuntimeError(e)
 
     return r
+
+
+def compress_array_of_start_times(start_times, min_duration):
+    """Splitting an mp3 with ffmpeg can result in very short clips; too
+    short to be practical.  For example, you might end up with clips
+    with the following start times (seconds):
+
+    0
+    0.1
+    0.5
+    2.1
+    2.2
+    5
+
+    This routine would return only those start times that result in
+    clips of sensible lengths; e.g. with min_duration = 0.5:
+
+    0
+    # 0.1 - skipped, included in the clip starting at 0
+    0.5
+    2.1
+    # 2.2 - skipped, included in clip starting at 2.1
+    5
+
+    """
+
+    ret = [start_times[0]]
+    for candidate_start in start_times[1:]:
+        curr_len = candidate_start - ret[-1]
+        if curr_len >= min_duration:
+            ret.append(candidate_start)
+    return ret

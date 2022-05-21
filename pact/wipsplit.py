@@ -137,7 +137,7 @@ def get_corrected_chunk_times(
         in_filename,
         silence_threshold = DEFAULT_THRESHOLD,
         silence_duration = DEFAULT_DURATION,
-        min_duration_ms = 1000.0
+        min_duration_ms = 5000.0
 ):
     chunk_starts = get_chunk_starts(in_filename, silence_threshold, silence_duration)
     # chunk_times = chunk_times[0:10]
@@ -148,8 +148,6 @@ def get_corrected_chunk_times(
     # it's like an EOF marker, so can use it when determining the
     # actual starts we need.
 
-    # Convert to durations, use consecutive start times.
-    # add a fake ending time to make a final chunk.
     chunk_times = []
     for i in range(0, len(chunk_starts) - 1):
         chunk_times.append((chunk_starts[i], chunk_starts[i+1]))
