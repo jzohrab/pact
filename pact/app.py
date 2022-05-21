@@ -697,16 +697,19 @@ class BookmarkWindow(object):
         # loop was"self.root.bind(f'<{hotkey}>', lambda e: comm())".
         self.root.bind('<Command-p>', lambda e: self.play_pause())
 
-        self.root.bind('<Right>', lambda e: self.music_player.increment(100))
-        self.root.bind('<Left>', lambda e: self.music_player.increment(-100))
-        self.root.bind('<Command-Right>', lambda e: self.music_player.increment(1000))
-        self.root.bind('<Command-Left>', lambda e: self.music_player.increment(-1000))
-        self.root.bind('<Command-r>', lambda e: self.music_player.reposition(self.from_val))
+        mp = self.music_player
+        self.root.bind('<Right>', lambda e: mp.increment(100))
+        self.root.bind('<Left>', lambda e: mp.increment(-100))
+        self.root.bind('<Shift-Right>', lambda e: mp.increment(1000))
+        self.root.bind('<Shift-Left>', lambda e: mp.increment(-1000))
+        self.root.bind('<Command-Right>', lambda e: mp.reposition(self.next_start()))
+        self.root.bind('<Command-Left>', lambda e: mp.reposition(self.previous_start()))
+        self.root.bind('<Command-r>', lambda e: mp.reposition(self.from_val))
 
         self.root.bind('<Command-s>', lambda e: self.set_clip_start())
         self.root.bind('<Command-e>', lambda e: self.set_clip_end())
-        self.root.bind('<Command-Shift-s>', lambda e: self.music_player.reposition(self.start_var.get()))
-        self.root.bind('<Command-Shift-e>', lambda e: self.music_player.reposition(self.end_var.get()))
+        self.root.bind('<Command-Shift-s>', lambda e: mp.reposition(self.start_var.get()))
+        self.root.bind('<Command-Shift-e>', lambda e: mp.reposition(self.end_var.get()))
 
         self.root.bind('<Command-l>', lambda e: self.play_clip())
         self.root.bind('<Command-t>', lambda e: self.transcribe())
@@ -832,6 +835,23 @@ class BookmarkWindow(object):
         self.music_player.stop_at_ms = bounds[1]
         self.music_player.play()
 
+
+    def previous_start(self):
+        curr_pos = self.slider_var.get()
+        print(f'curr_pos = {curr_pos}')
+        print(f'clip_start_times = {self.clip_start_times}')
+        c = [p for p in self.clip_start_times if p < curr_pos]
+        print(f'c = {c}')
+        if len(c) == 0:
+            return curr_pos
+        return max(c)
+
+    def next_start(self):
+        curr_pos = self.slider_var.get()
+        c = [p for p in self.clip_start_times if p > curr_pos]
+        if len(c) == 0:
+            return curr_pos
+        return min(c)
 
     def transcribe(self):
         c = self.get_clip()
