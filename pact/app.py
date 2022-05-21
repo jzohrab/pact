@@ -134,7 +134,7 @@ class MainWindow:
             return b
 
         self.play_btn = _make_button('Play', 1, self.play_pause)
-        _make_button('Bookmark', 2, self.add_bookmark)
+        _make_button('Bookmark', 2, self.add_bookmark_at_current)
         _make_button('Delete', 3, self.delete_selected_bookmark)
         _make_button('Clip', 4, self.popup_clip_window)
 
@@ -168,7 +168,7 @@ class MainWindow:
         window.bind('<Left>', lambda e: self.increment(-100))
         window.bind('<Command-Right>', lambda e: self.increment(1000))
         window.bind('<Command-Left>', lambda e: self.increment(-1000))
-        window.bind('<m>', lambda e: self.add_bookmark())
+        window.bind('<m>', lambda e: self.add_bookmark_at_current())
         window.bind('<u>', lambda e: self.update_selected_bookmark(float(self.slider.get())))
         window.bind('<d>', lambda e: self.delete_selected_bookmark())
         window.bind('<Return>', lambda e: self.popup_clip_window())
@@ -250,13 +250,17 @@ class MainWindow:
             self.bookmarks_lst.select_set(selected_index)
 
 
-    def add_bookmark(self, m = None):
-        if self.music_file is None:
-            return
+    def add_bookmark_at_current(self, m = None):
         v = m
         if v is None:
             v = float(self.slider.get())
         b = pact.music.Bookmark(v)
+        self.add_bookmark(b)
+
+
+    def add_bookmark(self, b):
+        if self.music_file is None:
+            return
         self.bookmarks.append(b)
 
         if self.config.autosave:
