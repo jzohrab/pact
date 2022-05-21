@@ -121,6 +121,7 @@ def transcribe(c, bookmark):
     def __update_progressbar(n):
         print(f'{n}%')
 
+    ## TODO: move this to textmatch.py, and add test cases.
     def __search_transcription(sought, transcription_file):
         if transcription_file is None:
             return sought
