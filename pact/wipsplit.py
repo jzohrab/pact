@@ -78,8 +78,15 @@ def correct_raw(segstarts, min_duration_ms = 5000.0, shift_ms = 200):
     # given what I currently know, so arbitrarily shift the start
     # times back a few hundred ms.  It will give a small bit of noise,
     # but that's fine.
+
+    if len(segstarts) < 2:
+        # Nothing to correct: either no start times, or just one which
+        # can't be shifted/combined.
+        return segstarts
+
+    first = segstarts[0]
     ret = [
-        max(c - shift_ms, c)   # May result in multiple set to c
+        max(c - shift_ms, first)   # May result in many set to first
         for c
         in segstarts
     ]
@@ -148,28 +155,7 @@ def get_corrected_chunk_times(
         shift_ms = 200
 ):
     chunk_starts = segment_start_times(in_filename, silence_threshold, silence_duration, start_ms = start_ms, end_ms = end_ms)
-
-    print(f'correct = {correct_raw(chunk_starts, min_duration_ms, shift_ms)}')
-
-    # On my system at least, ffmpeg appears to find the start times a
-    # shade too late (i.e., the sound is clipped at the start if I
-    # start playing exactly where it ends).  I can't sort out why
-    # given what I currently know, so arbitrarily shift the start
-    # times back a few hundred ms.  It will give a small bit of noise,
-    # but that's fine.
-    chunk_starts = [
-        c - shift_ms if c > start_ms + shift_ms else c
-        for c
-        in chunk_starts
-    ]
-    chunk_times = pact.utils.sensible_start_times(chunk_starts, min_duration_ms)
-
-    # print(f'Initial split chunk count: {len(chunk_starts)}')
-    # print(f'cleaned up chunk count: {len(chunk_times)}')
-
-    print(f'chunk_times = {chunk_times}')
-    
-    return chunk_times
+    return correct_raw(chunk_starts, min_duration_ms, shift_ms)
 
 
 def get_bookmarks(
