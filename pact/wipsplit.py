@@ -63,6 +63,10 @@ def get_chunk_starts(in_filename, silence_threshold, silence_duration, start_ms 
         print(s)
         sys.stdout.flush()
 
+    p.stdout.close()
+    p.stderr.close()
+    p.wait()
+
     ## TODO: combine the regex matching below with the data collection
     ## above?
     lines = outlines
