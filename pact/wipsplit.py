@@ -49,8 +49,7 @@ def get_chunk_starts(in_filename, silence_threshold, silence_duration, start_ms 
     with subprocess.Popen(
             cmd,
             stderr=subprocess.PIPE,
-            stdout = subprocess.PIPE
-    ) as p:
+            stdout = subprocess.PIPE) as p:
         while True:
             line = p.stderr.readline()
             if not line:
