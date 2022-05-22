@@ -305,5 +305,14 @@ class TestMatcher_ellipsify(unittest.TestCase):
             self.assertEqual(actual, c[2])
 
 
+class TestMatcher_search_transcription(unittest.TestCase):
+
+    def test_initial(self):
+        transcription = 'test/assets/fake-transcription.txt'
+        actual = search_transcription('perro', transcription, 80)
+        expected = ['[Tengo un] ... perro, ... [es muy guapo.]']
+        self.assertEqual(actual, expected)
+
+
 if __name__ == '__main__':
     unittest.main()

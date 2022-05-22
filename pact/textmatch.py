@@ -226,3 +226,15 @@ def ellipsify(partial, fulltext):
             right = f' ... {right}'
 
     return f'{left}{partial}{right}'
+
+
+def search_transcription(sought, transcription_file, fuzzy_text_match_accuracy = 80):
+    contents = None
+    with open(transcription_file) as f:
+        contents = f.read()
+
+    matches = search(contents, sought, True, fuzzy_text_match_accuracy)
+    if len(matches) == 0:
+        return None
+
+    return [ ellipsify(m['match'], m['context']) for m in matches ]
