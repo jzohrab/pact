@@ -307,7 +307,7 @@ class TestMatcher_ellipsify(unittest.TestCase):
 
 class TestMatcher_search_transcription(unittest.TestCase):
 
-    def test_initial(self):
+    def test_match_and_context(self):
         transcription = 'test/assets/fake-transcription.txt'
         actual = search_transcription('perro', transcription, 80)
         expected = [
@@ -315,6 +315,11 @@ class TestMatcher_search_transcription(unittest.TestCase):
             '[Y ella tiene otro] ... perro, ... [pero el suyo es feo.]'
         ]
         self.assertEqual(actual, expected)
+
+    def test_returns_none_if_no_match(self):
+        transcription = 'test/assets/fake-transcription.txt'
+        actual = search_transcription('SOMETHING_ELSE', transcription, 80)
+        self.assertIsNone(actual)
 
 
 if __name__ == '__main__':
