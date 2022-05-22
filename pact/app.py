@@ -27,7 +27,7 @@ from pact.utils import TimeUtils
 from pact._version import __version__
 import pact.textmatch
 from pact.plugins.transcription import vosktranscription, unknown
-
+import pact.split
 
 class Config(configparser.ConfigParser):
 
@@ -134,7 +134,7 @@ class MainWindow:
             return b
 
         self.play_btn = _make_button('Play', 1, self.play_pause)
-        _make_button('Bookmark', 2, self.add_bookmark)
+        _make_button('Bookmark', 2, self.add_bookmark_at_current)
         _make_button('Delete', 3, self.delete_selected_bookmark)
         _make_button('Clip', 4, self.popup_clip_window)
 
@@ -168,7 +168,7 @@ class MainWindow:
         window.bind('<Left>', lambda e: self.increment(-100))
         window.bind('<Command-Right>', lambda e: self.increment(1000))
         window.bind('<Command-Left>', lambda e: self.increment(-1000))
-        window.bind('<m>', lambda e: self.add_bookmark())
+        window.bind('<m>', lambda e: self.add_bookmark_at_current())
         window.bind('<u>', lambda e: self.update_selected_bookmark(float(self.slider.get())))
         window.bind('<d>', lambda e: self.delete_selected_bookmark())
         window.bind('<Return>', lambda e: self.popup_clip_window())
@@ -250,13 +250,17 @@ class MainWindow:
             self.bookmarks_lst.select_set(selected_index)
 
 
-    def add_bookmark(self, m = None):
-        if self.music_file is None:
-            return
+    def add_bookmark_at_current(self, m = None):
         v = m
         if v is None:
             v = float(self.slider.get())
         b = pact.music.Bookmark(v)
+        self.add_bookmark(b)
+
+
+    def add_bookmark(self, b):
+        if self.music_file is None:
+            return
         self.bookmarks.append(b)
 
         if self.config.autosave:
@@ -500,6 +504,7 @@ Update '{fieldname}' in the session file and try again."""
         self.session_file = sessionfile
 
         self.load_mp3(appstate.music_file)
+
         self._load_transcription(appstate.transcription_file)
         self.music_player.reposition(appstate.music_player_pos)
         self.bookmarks = appstate.bookmarks
@@ -528,6 +533,15 @@ class BookmarkWindow(object):
         self.reposition_popup(parent, 50, 50)
 
         self.from_val, self.to_val = self.get_slider_from_to(bookmark, allbookmarks)
+
+        # List of potential "clip start times" within the range.
+        self.candidate_break_times = pact.split.segment_start_times(
+            in_filename = music_file,
+            start_ms = self.from_val,
+            end_ms = self.to_val,
+            min_duration_ms = 2000.0,
+            shift_ms = 200.0
+        )
 
         # Pre-calc graphing data.  If from_val or to_val change, must recalc.
         self.signal_plot_data = self.get_signal_plot_data(self.from_val, self.to_val)
@@ -674,16 +688,19 @@ class BookmarkWindow(object):
         # loop was"self.root.bind(f'<{hotkey}>', lambda e: comm())".
         self.root.bind('<Command-p>', lambda e: self.play_pause())
 
-        self.root.bind('<Right>', lambda e: self.music_player.increment(100))
-        self.root.bind('<Left>', lambda e: self.music_player.increment(-100))
-        self.root.bind('<Command-Right>', lambda e: self.music_player.increment(1000))
-        self.root.bind('<Command-Left>', lambda e: self.music_player.increment(-1000))
-        self.root.bind('<Command-r>', lambda e: self.music_player.reposition(self.from_val))
+        mp = self.music_player
+        self.root.bind('<Right>', lambda e: mp.increment(100))
+        self.root.bind('<Left>', lambda e: mp.increment(-100))
+        self.root.bind('<Shift-Right>', lambda e: mp.increment(1000))
+        self.root.bind('<Shift-Left>', lambda e: mp.increment(-1000))
+        self.root.bind('<Command-Right>', lambda e: mp.reposition(self.next_start()))
+        self.root.bind('<Command-Left>', lambda e: mp.reposition(self.previous_start()))
+        self.root.bind('<Command-r>', lambda e: mp.reposition(self.from_val))
 
         self.root.bind('<Command-s>', lambda e: self.set_clip_start())
         self.root.bind('<Command-e>', lambda e: self.set_clip_end())
-        self.root.bind('<Command-Shift-s>', lambda e: self.music_player.reposition(self.start_var.get()))
-        self.root.bind('<Command-Shift-e>', lambda e: self.music_player.reposition(self.end_var.get()))
+        self.root.bind('<Command-Shift-s>', lambda e: mp.reposition(self.start_var.get()))
+        self.root.bind('<Command-Shift-e>', lambda e: mp.reposition(self.end_var.get()))
 
         self.root.bind('<Command-l>', lambda e: self.play_clip())
         self.root.bind('<Command-t>', lambda e: self.transcribe())
@@ -810,6 +827,20 @@ class BookmarkWindow(object):
         self.music_player.play()
 
 
+    def previous_start(self):
+        curr_pos = self.slider_var.get()
+        c = [p for p in self.candidate_break_times if p < curr_pos]
+        if len(c) == 0:
+            return curr_pos
+        return max(c)
+
+    def next_start(self):
+        curr_pos = self.slider_var.get()
+        c = [p for p in self.candidate_break_times if p > curr_pos]
+        if len(c) == 0:
+            return curr_pos
+        return min(c)
+
     def transcribe(self):
         c = self.get_clip()
         if c is None:
@@ -828,20 +859,16 @@ class BookmarkWindow(object):
             if transcription_file is None:
                 return sought
 
-            contents = None
-            with open(transcription_file) as f:
-                contents = f.read()
-
             fuzzy_text_match_accuracy = 80
-            matches = pact.textmatch.search(contents, sought, True, fuzzy_text_match_accuracy)
-            if len(matches) == 0:
+            result = pact.textmatch.search_transcription(
+                sought, transcription_file, fuzzy_text_match_accuracy)
+
+            if result is None:
                 cream = '#FFFDD0'
                 self.transcription_textbox.config(bg=cream)
                 return sought
-
-            print(f'matches: {matches}')
-            result = [ pact.textmatch.ellipsify(m['match'], m['context']) for m in matches ]
-            return '\n\n'.join(result).strip()
+            else:
+                return '\n\n'.join(result).strip()
 
         def __try_transcription_search(sought):
             sought = __search_transcription(sought, self.transcription_file)
@@ -999,8 +1026,8 @@ class BookmarkWindow(object):
                 raw.close()
 
         time = np.linspace(
-            0, # start
-            len(signal) / f_rate,
+            from_val, # start
+            to_val,
             num = len(signal)
         )
         return (time, signal)
@@ -1023,8 +1050,12 @@ class BookmarkWindow(object):
         plot1.axes.get_yaxis().set_visible(False)
 
         time, signal = self.signal_plot_data
-        plot1.plot(signal)
-        
+
+        plot1.plot(time, signal)
+
+        for t in self.candidate_break_times:
+            plot1.axvline(x=t, color='red')
+
         canvas = FigureCanvasTkAgg(fig, master = frame)
 
         return (canvas.get_tk_widget(), fig)
