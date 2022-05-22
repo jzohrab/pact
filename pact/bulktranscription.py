@@ -33,7 +33,6 @@ def __transcribe(c, bookmark, transcription_strategy, bookmark_done_callback):
     def __try_transcription_search(sought, ts):
         sought = __search_transcription(sought, 'samples/input.txt')
         __set_transcription(sought)
-        # print(bookmark.display())
         bookmark_done_callback(bookmark)
         ts.stop()
 
@@ -58,19 +57,13 @@ def get_transcribed_bookmarks(
     if in_filename is None or len(segment_starts) == 0:
         return []
 
-    clipbounds = make_bounds(segment_starts, end_time)
-    
     allbookmarks = []
-    # Now for each chunk, play the segments of the file.
-    for ct in clipbounds:
-
+    for ct in make_bounds(segment_starts, end_time):
         b = pact.music.Bookmark(ct[0])
         b.clip_bounds_ms = [ ct[0], ct[1] ]
         seg = pact.utils.audiosegment_from_mp3_time_range(in_filename, ct[0], ct[1])
         __transcribe(seg, b, transcription_strategy, bookmark_done_callback)
-
         allbookmarks.append(b)
-
 
     return allbookmarks
 
