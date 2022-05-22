@@ -189,13 +189,14 @@ def transcribe(c, bookmark, bookmark_done_callback):
 
 def get_bookmarks(
         in_filename,
-        silence_threshold = DEFAULT_THRESHOLD,
-        silence_duration = DEFAULT_DURATION,
-        min_duration_ms = 2000.0,
+        segment_starts,
         bookmark_done_callback = None
 ):
-    chunk_times = segment_start_times(in_filename, silence_threshold, silence_duration, min_duration_ms)
 
+    # Need to get the start and end for each segment.
+    # For each of them, it's just the pairs of the segments,
+    # except for the last one.
+    
     allthreads = []
     allbookmarks = []
     # Now for each chunk, play the segments of the file.
