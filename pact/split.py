@@ -1,8 +1,9 @@
 # Can run this from root dir like:
-# python -m pact.wipsplit
+# python -m pact.split
 
-# MASSIVE steal from
+# Initial ideas taken from
 # https://raw.githubusercontent.com/kkroening/ffmpeg-python/master/examples/split_silence.py
+
 
 import argparse
 import ffmpeg
@@ -14,20 +15,21 @@ import sys
 
 import pact.utils
 import pact.music
-
 import pact.textmatch
 from pact.plugins.transcription import vosktranscription, unknown
-
 
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 logger = logging.getLogger(__file__)
 logger.setLevel(logging.INFO)
 
+
+# Duration for splits.
 DEFAULT_DURATION = 0.3
+
+# dB threshold for splits.
 DEFAULT_THRESHOLD = -10
 
 
-# TODO: this belongs in utils?
 def raw_start_times(in_filename, silence_threshold, silence_duration, start_ms = 0, end_ms = 200 * 1000):
     """Given an in_filename, find possible split points (phrase start
     times) using ffmpeg.
