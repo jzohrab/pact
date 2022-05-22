@@ -71,6 +71,27 @@ def segment_start_times(in_filename, silence_threshold, silence_duration, start_
     return chunk_starts
 
 
+def correct_raw(segstarts, min_duration_ms = 5000.0, shift_ms = 200):
+
+    # On my system at least, ffmpeg appears to find the start times a
+    # shade too late (i.e., the sound is clipped at the start if I
+    # start playing exactly where it ends).  I can't sort out why
+    # given what I currently know, so arbitrarily shift the start
+    # times back a few hundred ms.  It will give a small bit of noise,
+    # but that's fine.
+    ret = [
+        max(c - shift_ms, c)   # May result in multiple set to c
+        for c
+        in segstarts
+    ]
+
+    # Remove duplicates (likely unnecessary)
+    ret = list(set(ret))
+
+    ret = pact.utils.sensible_start_times(ret, min_duration_ms)
+
+    return ret
+
 
 ### TODO - hide this somewhere, or just delete it.
 def transcribe(c, bookmark, bookmark_done_callback):
