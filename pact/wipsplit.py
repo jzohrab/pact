@@ -29,7 +29,6 @@ DEFAULT_THRESHOLD = -10
 
 
 def _logged_popen(cmd_line, *args, **kwargs):
-    logger.debug('Running command: {}'.format(subprocess.list2cmdline(cmd_line)))
     return subprocess.Popen(cmd_line, *args, **kwargs)
 
 
@@ -50,6 +49,7 @@ def get_chunk_starts(in_filename, silence_threshold, silence_duration, start_ms 
         .output('-', format='null')
         .compile()
     ) + ['-nostats']  # FIXME: use .nostats() once it's implemented in ffmpeg-python.
+    logger.debug(f'Running command: {subprocess.list2cmdline(cmd)}')
     with _logged_popen(
             cmd,
             stderr=subprocess.PIPE,
