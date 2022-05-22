@@ -43,15 +43,17 @@ def get_chunk_starts(in_filename, silence_threshold, silence_duration, start_ms 
     print(f't = {t}')
 
     outlines = []
+    cmd = (
+        ffmpeg
+        .input(in_filename, ss=ss, t=t)
+        .filter('silencedetect', n='{}dB'.format(silence_threshold), d=silence_duration)
+        .output('-', format='null')
+        .compile()
+    ) + ['-nostats']  # FIXME: use .nostats() once it's implemented in ffmpeg-python.
     with _logged_popen(
-        (ffmpeg
-            .input(in_filename, ss=ss, t=t)
-            .filter('silencedetect', n='{}dB'.format(silence_threshold), d=silence_duration)
-            .output('-', format='null')
-            .compile()
-        ) + ['-nostats'],  # FIXME: use .nostats() once it's implemented in ffmpeg-python.
-        stderr=subprocess.PIPE,
-        stdout = subprocess.PIPE
+            cmd,
+            stderr=subprocess.PIPE,
+            stdout = subprocess.PIPE
     ) as p:
         while True:
             line = p.stderr.readline()
