@@ -146,7 +146,7 @@ def transcribe(c, bookmark, bookmark_done_callback):
     return ts.transcription_thread
 
 
-def get_corrected_chunk_times(
+def segment_start_times(
         in_filename,
         silence_threshold = DEFAULT_THRESHOLD,
         silence_duration = DEFAULT_DURATION,
@@ -166,7 +166,7 @@ def get_bookmarks(
         min_duration_ms = 2000.0,
         bookmark_done_callback = None
 ):
-    chunk_times = get_corrected_chunk_times(in_filename, silence_threshold, silence_duration, min_duration_ms)
+    chunk_times = segment_start_times(in_filename, silence_threshold, silence_duration, min_duration_ms)
 
     allthreads = []
     allbookmarks = []
@@ -209,7 +209,7 @@ if __name__ == '__main__':
         logging.basicConfig(level=logging.DEBUG, format='%(levels): %(message)s')
         logger.setLevel(logging.DEBUG)
 
-    ct = get_corrected_chunk_times(
+    ct = segment_start_times(
         in_filename = args.in_filename,
         silence_threshold = args.silence_threshold,
         silence_duration = args.silence_duration,

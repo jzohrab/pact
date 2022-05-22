@@ -535,7 +535,7 @@ class BookmarkWindow(object):
         self.from_val, self.to_val = self.get_slider_from_to(bookmark, allbookmarks)
 
         # List of potential "clip start times" within the range.
-        self.candidate_break_times = pact.wipsplit.get_corrected_chunk_times(
+        self.candidate_break_times = pact.wipsplit.segment_start_times(
             in_filename = music_file,
             start_ms = self.from_val,
             end_ms = self.to_val,
