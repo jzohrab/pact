@@ -72,16 +72,6 @@ def raw_start_times(in_filename, silence_threshold, silence_duration, start_ms =
     return chunk_starts
 
 
-def make_bounds(start_times, end_time):
-    if len(start_times) == 0:
-        return []
-    ret = []
-    for i in range(0, len(start_times) - 1):
-        ret.append([ start_times[i], start_times[i + 1] ])
-    ret.append([ start_times[-1], end_time ])
-    return ret
-
-
 def sensible_start_times(start_times, min_duration):
     """Splitting an mp3 with ffmpeg can result in very short clips; too
     short to be practical.  For example, you might end up with clips
@@ -162,7 +152,7 @@ def segment_start_times(
     return correct_raw(chunk_starts, min_duration_ms, shift_ms)
 
 
-def transcribe(c, bookmark, bookmark_done_callback):
+def transcribe(c, bookmark, transcription_strategy, bookmark_done_callback):
     def __set_transcription(transcription):
         bookmark.transcription = transcription
 
@@ -186,9 +176,7 @@ def transcribe(c, bookmark, bookmark_done_callback):
         bookmark_done_callback(bookmark)
         ts.stop()
 
-    voskmodel = 'model/spanish'
-    ts = vosktranscription.VoskTranscriptionStrategy(voskmodel)
-    ts.start(
+    transcription_strategy.start(
         audiosegment = c,
         on_update_transcription = lambda s: __set_transcription(s),
         on_update_progress = lambda n: print(f'{n}%'),
@@ -198,25 +186,37 @@ def transcribe(c, bookmark, bookmark_done_callback):
     return ts.transcription_thread
 
 
-def get_bookmarks(
+def make_bounds(start_times, end_time):
+    if len(start_times) == 0:
+        return []
+    ret = []
+    for i in range(0, len(start_times) - 1):
+        ret.append([ start_times[i], start_times[i + 1] ])
+    ret.append([ start_times[-1], end_time ])
+    return ret
+
+
+def get_transcribed_bookmarks(
         in_filename,
         segment_starts,
+        transcription_strategy,
         bookmark_done_callback = None
 ):
+    if in_filename is None or len(segment_starts) == 0:
+        return []
 
-    # Need to get the start and end for each segment.
-    # For each of them, it's just the pairs of the segments,
-    # except for the last one.
+    endtime = max(segment_starts) + 60 * 60 * 1000;
+    clipbounds = make_bounds(segment_starts, endtime)
     
     allthreads = []
     allbookmarks = []
     # Now for each chunk, play the segments of the file.
-    for ct in chunk_times:
+    for ct in clipbounds:
         # print('----')
         # print(ct)
 
-        b = pact.music.Bookmark(ct)
-        # b.clip_bounds_ms = [ ct[0], ct[1] ]
+        b = pact.music.Bookmark(ct[0])
+        b.clip_bounds_ms = [ ct[0], ct[1] ]
         bookmark_done_callback(b)
         allbookmarks.append(b)
 
