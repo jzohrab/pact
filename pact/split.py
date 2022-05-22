@@ -96,6 +96,7 @@ def sensible_start_times(start_times, min_duration):
 
     """
 
+    start_times.sort()
     ret = [start_times[0]]
     for candidate_start in start_times[1:]:
         curr_len = candidate_start - ret[-1]
