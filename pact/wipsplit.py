@@ -30,12 +30,12 @@ DEFAULT_THRESHOLD = -10
 
 # TODO: this belongs in utils
 def get_chunk_starts(in_filename, silence_threshold, silence_duration, start_ms = 0, end_ms = 200 * 1000):
-    print(f'start_ms = {start_ms}')
-    print(f'end_ms = {end_ms}')
     ss = (start_ms/1000.0)
-    print(f'ss = {ss}')
     t = (end_ms - start_ms)/1000.0
-    print(f't = {t}')
+    # print(f'start_ms = {start_ms}')
+    # print(f'end_ms = {end_ms}')
+    # print(f'ss = {ss}')
+    # print(f't = {t}')
 
     outlines = []
     cmd = (
@@ -57,8 +57,8 @@ def get_chunk_starts(in_filename, silence_threshold, silence_duration, start_ms 
                 break
             s = line.decode('utf-8').strip()
             outlines.append(s)
-            print(s)
-            sys.stdout.flush()
+            # print(s)
+            # sys.stdout.flush()
 
     ## TODO: combine the regex matching below with the data collection
     ## above?
@@ -153,8 +153,8 @@ def get_corrected_chunk_times(
     ]
     chunk_times = pact.utils.sensible_start_times(chunk_starts, min_duration_ms)
 
-    print(f'Initial split chunk count: {len(chunk_starts)}')
-    print(f'cleaned up chunk count: {len(chunk_times)}')
+    # print(f'Initial split chunk count: {len(chunk_starts)}')
+    # print(f'cleaned up chunk count: {len(chunk_times)}')
 
     return chunk_times
 
