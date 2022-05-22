@@ -151,7 +151,6 @@ def segment_start_times(
     return correct_raw(chunk_starts, min_duration_ms, shift_ms)
 
 
-### TODO - hide this somewhere, or just delete it.
 def transcribe(c, bookmark, bookmark_done_callback):
     def __set_transcription(transcription):
         bookmark.transcription = transcription
@@ -159,22 +158,14 @@ def transcribe(c, bookmark, bookmark_done_callback):
     def __update_progressbar(n):
         print(f'{n}%')
 
-    ## TODO: move this to textmatch.py, and add test cases.
     def __search_transcription(sought, transcription_file):
         if transcription_file is None:
             return sought
-
-        contents = None
-        with open(transcription_file) as f:
-            contents = f.read()
-
         fuzzy_text_match_accuracy = 80
-        matches = pact.textmatch.search(contents, sought, True, fuzzy_text_match_accuracy)
-        if len(matches) == 0:
+        result = pact.textmatch.search_transcription(
+            sought, transcription_file, fuzzy_text_match_accuracy)
+        if len(result) == 0:
             return f'(?) {sought}'
-
-        # print(f'matches: {matches}')
-        result = [ pact.textmatch.ellipsify(m['match'], m['context']) for m in matches ]
         return '\n\n'.join(result).strip()
 
     def __try_transcription_search(sought, ts):
