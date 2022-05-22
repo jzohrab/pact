@@ -859,20 +859,16 @@ class BookmarkWindow(object):
             if transcription_file is None:
                 return sought
 
-            contents = None
-            with open(transcription_file) as f:
-                contents = f.read()
-
             fuzzy_text_match_accuracy = 80
-            matches = pact.textmatch.search(contents, sought, True, fuzzy_text_match_accuracy)
-            if len(matches) == 0:
+            result = pact.textmatch.search_transcription(
+                sought, transcription_file, fuzzy_text_match_accuracy)
+
+            if result is None:
                 cream = '#FFFDD0'
                 self.transcription_textbox.config(bg=cream)
                 return sought
-
-            print(f'matches: {matches}')
-            result = [ pact.textmatch.ellipsify(m['match'], m['context']) for m in matches ]
-            return '\n\n'.join(result).strip()
+            else:
+                return '\n\n'.join(result).strip()
 
         def __try_transcription_search(sought):
             sought = __search_transcription(sought, self.transcription_file)
