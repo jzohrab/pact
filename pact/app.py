@@ -535,7 +535,7 @@ class BookmarkWindow(object):
         self.from_val, self.to_val = self.get_slider_from_to(bookmark, allbookmarks)
 
         # List of potential "clip start times" within the range.
-        self.clip_start_times = pact.wipsplit.get_corrected_chunk_times(
+        self.candidate_break_times = pact.wipsplit.get_corrected_chunk_times(
             in_filename = music_file,
             start_ms = self.from_val,
             end_ms = self.to_val,
@@ -829,14 +829,14 @@ class BookmarkWindow(object):
 
     def previous_start(self):
         curr_pos = self.slider_var.get()
-        c = [p for p in self.clip_start_times if p < curr_pos]
+        c = [p for p in self.candidate_break_times if p < curr_pos]
         if len(c) == 0:
             return curr_pos
         return max(c)
 
     def next_start(self):
         curr_pos = self.slider_var.get()
-        c = [p for p in self.clip_start_times if p > curr_pos]
+        c = [p for p in self.candidate_break_times if p > curr_pos]
         if len(c) == 0:
             return curr_pos
         return min(c)
@@ -1057,7 +1057,7 @@ class BookmarkWindow(object):
 
         plot1.plot(time, signal)
 
-        for t in self.clip_start_times:
+        for t in self.candidate_break_times:
             plot1.axvline(x=t, color='red')
 
         canvas = FigureCanvasTkAgg(fig, master = frame)
