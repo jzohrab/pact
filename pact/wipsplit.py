@@ -226,6 +226,6 @@ if __name__ == '__main__':
 
     print(f'count of chunks: {len(ct)}')
     print(f'min duration: {min(durations)}')
-
-    for c in ct:
+    print('First 10:')
+    for c in ct[0:10]:
         print(pact.utils.TimeUtils.time_string(c))
