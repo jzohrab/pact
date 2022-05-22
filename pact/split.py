@@ -72,6 +72,16 @@ def raw_start_times(in_filename, silence_threshold, silence_duration, start_ms =
     return chunk_starts
 
 
+def make_bounds(start_times, end_time):
+    if len(start_times) == 0:
+        return []
+    ret = []
+    for i in range(0, len(start_times) - 1):
+        ret.append([ start_times[i], start_times[i + 1] ])
+    ret.append([ start_times[-1], end_time ])
+    return ret
+
+
 def sensible_start_times(start_times, min_duration):
     """Splitting an mp3 with ffmpeg can result in very short clips; too
     short to be practical.  For example, you might end up with clips
