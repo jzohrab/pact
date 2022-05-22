@@ -72,7 +72,6 @@ def segment_start_times(in_filename, silence_threshold, silence_duration, start_
 
 
 def correct_raw(segstarts, min_duration_ms = 5000.0, shift_ms = 200):
-
     # On my system at least, ffmpeg appears to find the start times a
     # shade too late (i.e., the sound is clipped at the start if I
     # start playing exactly where it ends).  I can't sort out why
@@ -87,6 +86,7 @@ def correct_raw(segstarts, min_duration_ms = 5000.0, shift_ms = 200):
 
     # Remove duplicates (likely unnecessary)
     ret = list(set(ret))
+    ret.sort()  # !!! Have to sort again for sensible_start_times!
 
     ret = pact.utils.sensible_start_times(ret, min_duration_ms)
 
@@ -149,6 +149,8 @@ def get_corrected_chunk_times(
 ):
     chunk_starts = segment_start_times(in_filename, silence_threshold, silence_duration, start_ms = start_ms, end_ms = end_ms)
 
+    print(f'correct = {correct_raw(chunk_starts, min_duration_ms, shift_ms)}')
+
     # On my system at least, ffmpeg appears to find the start times a
     # shade too late (i.e., the sound is clipped at the start if I
     # start playing exactly where it ends).  I can't sort out why
@@ -165,6 +167,8 @@ def get_corrected_chunk_times(
     # print(f'Initial split chunk count: {len(chunk_starts)}')
     # print(f'cleaned up chunk count: {len(chunk_times)}')
 
+    print(f'chunk_times = {chunk_times}')
+    
     return chunk_times
 
 
