@@ -310,7 +310,10 @@ class TestMatcher_search_transcription(unittest.TestCase):
     def test_initial(self):
         transcription = 'test/assets/fake-transcription.txt'
         actual = search_transcription('perro', transcription, 80)
-        expected = ['[Tengo un] ... perro, ... [es muy guapo.]']
+        expected = [
+            '[Tengo un] ... perro, ... [es muy guapo.]',
+            '[Y ella tiene otro] ... perro, ... [pero el suyo es feo.]'
+        ]
         self.assertEqual(actual, expected)
 
 

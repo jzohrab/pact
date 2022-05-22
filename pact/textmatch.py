@@ -237,4 +237,10 @@ def search_transcription(sought, transcription_file, fuzzy_text_match_accuracy =
     if len(matches) == 0:
         return None
 
-    return [ ellipsify(m['match'], m['context']) for m in matches ]
+    # Sometimes the search returns slightly different matches for the
+    # same context, so for each context, pick an arbitrary match.
+    context_to_match = {}
+    for m in matches:
+        context_to_match[m['context']] = m['match']
+    
+    return [ ellipsify(m, context) for context, m in context_to_match.items() ]
