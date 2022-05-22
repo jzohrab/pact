@@ -29,7 +29,7 @@ def __transcribe(c, bookmark, transcription_strategy, bookmark_done_callback):
         fuzzy_text_match_accuracy = 80
         result = pact.textmatch.search_transcription(
             sought, transcription_file, fuzzy_text_match_accuracy)
-        if len(result) == 0:
+        if result is None:
             return f'(?) {sought}'
         return '\n\n'.join(result).strip()
 
@@ -40,6 +40,7 @@ def __transcribe(c, bookmark, transcription_strategy, bookmark_done_callback):
         bookmark_done_callback(bookmark)
         ts.stop()
 
+    ts = transcription_strategy
     transcription_strategy.start(
         audiosegment = c,
         on_update_transcription = lambda s: __set_transcription(s),
@@ -47,20 +48,20 @@ def __transcribe(c, bookmark, transcription_strategy, bookmark_done_callback):
         on_finished = lambda s: __try_transcription_search(s, ts),
         on_daemon_thread = False
     )
-    return ts.transcription_thread
+    return transcription_strategy.transcription_thread
 
 
 def get_transcribed_bookmarks(
         in_filename,
         segment_starts,
+        end_time,
         transcription_strategy,
         bookmark_done_callback = None
 ):
     if in_filename is None or len(segment_starts) == 0:
         return []
 
-    endtime = max(segment_starts) + 60 * 60 * 1000;
-    clipbounds = make_bounds(segment_starts, endtime)
+    clipbounds = make_bounds(segment_starts, end_time)
     
     allthreads = []
     allbookmarks = []
@@ -95,13 +96,15 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Bulk transcription test')
     parser.add_argument('in_filename')
     parser.add_argument('vosk_model')
+    parser.add_argument('--startms', type=int, default=0, help='start time (ms) for bookmarks')
+    parser.add_argument('--endms', type=int, default=60000, help='end time (ms) for bookmarks')
     args = parser.parse_args()
     
     segment_starts = pact.split.segment_start_times(
         in_filename = args.in_filename,
         min_duration_ms = 5000.0,
-        start_ms = 0,
-        end_ms = 3 * 60 * 1000
+        start_ms = args.startms,
+        end_ms = args.endms
     )
 
     strategy = vosktranscription.VoskTranscriptionStrategy(args.vosk_model)
@@ -110,9 +113,10 @@ if __name__ == '__main__':
         print(b.to_dict())
 
     bookmarks = get_transcribed_bookmarks(
-        args.in_filename,
-        segment_starts,
-        strategy,
+        in_filename = args.in_filename,
+        segment_starts = segment_starts,
+        end_time = args.endms,
+        transcription_strategy = strategy,
         bookmark_done_callback = print_bookmark)
 
     print(f'Got {len(bookmarks)} bookmarks.')
