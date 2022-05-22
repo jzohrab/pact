@@ -32,10 +32,6 @@ DEFAULT_THRESHOLD = -10
 def get_chunk_starts(in_filename, silence_threshold, silence_duration, start_ms = 0, end_ms = 200 * 1000):
     ss = (start_ms/1000.0)
     t = (end_ms - start_ms)/1000.0
-    # print(f'start_ms = {start_ms}')
-    # print(f'end_ms = {end_ms}')
-    # print(f'ss = {ss}')
-    # print(f't = {t}')
 
     outlines = []
     cmd = (
@@ -46,18 +42,15 @@ def get_chunk_starts(in_filename, silence_threshold, silence_duration, start_ms 
         .compile()
     ) + ['-nostats']  # FIXME: use .nostats() once it's implemented in ffmpeg-python.
     logger.debug(f'Running command: {subprocess.list2cmdline(cmd)}')
+
     with subprocess.Popen(
             cmd,
             stderr=subprocess.PIPE,
             stdout = subprocess.PIPE) as p:
-        while True:
-            line = p.stderr.readline()
-            if not line:
-                break
+        for line in p.stderr:
             s = line.decode('utf-8').strip()
             outlines.append(s)
-            # print(s)
-            # sys.stdout.flush()
+
 
     ## TODO: combine the regex matching below with the data collection
     ## above?
