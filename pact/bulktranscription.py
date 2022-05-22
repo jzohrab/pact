@@ -20,9 +20,6 @@ def __transcribe(c, bookmark, transcription_strategy, bookmark_done_callback):
     def __set_transcription(transcription):
         bookmark.transcription = transcription
 
-    def __update_progressbar(n):
-        print(f'{n}%')
-
     def __search_transcription(sought, transcription_file):
         if transcription_file is None:
             return sought
@@ -36,7 +33,7 @@ def __transcribe(c, bookmark, transcription_strategy, bookmark_done_callback):
     def __try_transcription_search(sought, ts):
         sought = __search_transcription(sought, 'samples/input.txt')
         __set_transcription(sought)
-        print(bookmark.display())
+        # print(bookmark.display())
         bookmark_done_callback(bookmark)
         ts.stop()
 
@@ -98,14 +95,17 @@ if __name__ == '__main__':
 
     strategy = vosktranscription.VoskTranscriptionStrategy(args.vosk_model)
 
-    def print_bookmark(b):
-        print(b.to_dict())
+    n = 0
+    def print_progress(b):
+        global n
+        n += 1
+        print(f'{n} of {len(segment_starts)}: {b.display()}')
 
     bookmarks = get_transcribed_bookmarks(
         in_filename = args.in_filename,
         segment_starts = segment_starts,
         end_time = args.endms,
         transcription_strategy = strategy,
-        bookmark_done_callback = print_bookmark)
+        bookmark_done_callback = print_progress)
 
     print(f'Got {len(bookmarks)} bookmarks.')
