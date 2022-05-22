@@ -242,5 +242,5 @@ def search_transcription(sought, transcription_file, fuzzy_text_match_accuracy =
     context_to_match = {}
     for m in matches:
         context_to_match[m['context']] = m['match']
-    
+
     return [ ellipsify(m, context) for context, m in context_to_match.items() ]

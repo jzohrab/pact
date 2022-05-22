@@ -17,4 +17,4 @@ class TestBulkTranscription_make_bounds(unittest.TestCase):
         for c in cases:
             actual = make_bounds(c[0], endtime)
             self.assertEqual(actual, c[1])
-        
+
