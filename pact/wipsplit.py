@@ -42,7 +42,8 @@ def get_chunk_starts(in_filename, silence_threshold, silence_duration, start_ms 
     t = (end_ms - start_ms)/1000.0
     print(f't = {t}')
 
-    p = _logged_popen(
+    outlines = []
+    with _logged_popen(
         (ffmpeg
             .input(in_filename, ss=ss, t=t)
             .filter('silencedetect', n='{}dB'.format(silence_threshold), d=silence_duration)
@@ -51,21 +52,15 @@ def get_chunk_starts(in_filename, silence_threshold, silence_duration, start_ms 
         ) + ['-nostats'],  # FIXME: use .nostats() once it's implemented in ffmpeg-python.
         stderr=subprocess.PIPE,
         stdout = subprocess.PIPE
-    )
-
-    outlines = []
-    while True:
-        line = p.stderr.readline()
-        if not line:
-            break
-        s = line.decode('utf-8').strip()
-        outlines.append(s)
-        print(s)
-        sys.stdout.flush()
-
-    p.stdout.close()
-    p.stderr.close()
-    p.wait()
+    ) as p:
+        while True:
+            line = p.stderr.readline()
+            if not line:
+                break
+            s = line.decode('utf-8').strip()
+            outlines.append(s)
+            print(s)
+            sys.stdout.flush()
 
     ## TODO: combine the regex matching below with the data collection
     ## above?
