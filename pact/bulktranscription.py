@@ -1,6 +1,22 @@
+"""Bulk transcription.
+
+This module works, but it's slow.  It might suffice for _some_
+purpose, but I don't need it yet, and so am not hooking it up.
+
+Sample run of __main__:
+
+$ python -m pact.bulktranscription samples/input.mp3 model/spanish --endms 40000
+1 of 6: 00:00.0  "... Esta semana terminamos las charlas y talleres  ..."
+2 of 6: 00:08.7  "Si te perdiste algún evento aún puedes acceder a é ..."
+3 of 6: 00:15.7  "... da clic en compra: enviaremos a tu correo una  ..."
+4 of 6: 00:22.0  "Cada boleto que has comprado contribuye a sostener ..."
+5 of 6: 00:29.0  "Pronto tendremos también nuestra fiesta para que f ..."
+6 of 6: 00:36.6  "(?) dieciséis de julio de mil novecientos noventa  ..."
+Got 6 bookmarks after 00:25.3.
+"""
+
 import argparse
 import sys
-
 import pact.utils
 import pact.music
 import pact.textmatch
@@ -44,7 +60,6 @@ def __transcribe(c, bookmark, transcription_strategy, bookmark_done_callback):
         on_finished = lambda s: __try_transcription_search(s, ts),
         on_daemon_thread = False
     )
-    return transcription_strategy.transcription_thread
 
 
 def get_transcribed_bookmarks(
@@ -71,6 +86,8 @@ def get_transcribed_bookmarks(
 if __name__ == '__main__':
     import pact.split
     from pact.plugins.transcription import vosktranscription
+    from pact.utils import TimeUtils
+    import time
 
     parser = argparse.ArgumentParser(description='Bulk transcription test')
     parser.add_argument('in_filename')
@@ -78,7 +95,8 @@ if __name__ == '__main__':
     parser.add_argument('--startms', type=int, default=0, help='start time (ms) for bookmarks')
     parser.add_argument('--endms', type=int, default=60000, help='end time (ms) for bookmarks')
     args = parser.parse_args()
-    
+
+    starttime = time.time()
     segment_starts = pact.split.segment_start_times(
         in_filename = args.in_filename,
         min_duration_ms = 5000.0,
@@ -101,4 +119,8 @@ if __name__ == '__main__':
         transcription_strategy = strategy,
         bookmark_done_callback = print_progress)
 
-    print(f'Got {len(bookmarks)} bookmarks.')
+    endtime = time.time()
+    duration = endtime - starttime
+    t = TimeUtils.time_string(duration * 1000)
+    print(f'Got {len(bookmarks)} bookmarks after {t}.')
+
