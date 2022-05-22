@@ -16,7 +16,7 @@ def make_bounds(start_times, end_time):
     return ret
 
 
-def transcribe(c, bookmark, transcription_strategy, bookmark_done_callback):
+def __transcribe(c, bookmark, transcription_strategy, bookmark_done_callback):
     def __set_transcription(transcription):
         bookmark.transcription = transcription
 
@@ -72,11 +72,12 @@ def get_transcribed_bookmarks(
         b = pact.music.Bookmark(ct[0])
         b.clip_bounds_ms = [ ct[0], ct[1] ]
         bookmark_done_callback(b)
-        allbookmarks.append(b)
 
         ## DISABLE transcription for now, just set the bounds.
-        # seg = pact.utils.audiosegment_from_mp3_time_range(in_filename, ct[0], ct[1])
-        # transcribe(seg, b, bookmark_done_callback)
+        seg = pact.utils.audiosegment_from_mp3_time_range(in_filename, ct[0], ct[1])
+        __transcribe(seg, b, transcription_strategy, bookmark_done_callback)
+
+        allbookmarks.append(b)
 
         # allthreads.append(t)
         # t.join()
