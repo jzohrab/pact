@@ -44,10 +44,10 @@ def get_chunk_starts(in_filename, silence_threshold, silence_duration, start_ms 
 
     # ffmpeg outputs e.g. "silence_end: 123.234" to stderr.
     def add_if_matches_end_re(line):
-        end_match = end_re.search(line)
+        s = line.decode('utf-8').strip()
+        end_match = end_re.search(s)
         if end_match:
-            e = time_ms(end_match)
-            chunk_starts.append(e)
+            chunk_starts.append(time_ms(end_match))
 
     ffmpegcmd = (
         ffmpeg
@@ -63,8 +63,7 @@ def get_chunk_starts(in_filename, silence_threshold, silence_duration, start_ms 
             stderr=subprocess.PIPE,
             stdout = subprocess.PIPE) as p:
         for line in p.stderr:
-            s = line.decode('utf-8').strip()
-            add_if_matches_end_re(s)
+            add_if_matches_end_re(line)
 
     return chunk_starts
 
