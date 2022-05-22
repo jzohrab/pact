@@ -123,7 +123,8 @@ def get_corrected_chunk_times(
         silence_duration = DEFAULT_DURATION,
         min_duration_ms = 5000.0,
         start_ms = 0,
-        end_ms = 200 * 1000
+        end_ms = 200 * 1000,
+        shift_ms = 200
 ):
     chunk_starts = segment_start_times(in_filename, silence_threshold, silence_duration, start_ms = start_ms, end_ms = end_ms)
 
@@ -133,9 +134,8 @@ def get_corrected_chunk_times(
     # given what I currently know, so arbitrarily shift the start
     # times back a few hundred ms.  It will give a small bit of noise,
     # but that's fine.
-    shift_by_ms = 200
     chunk_starts = [
-        c - shift_by_ms if c > start_ms + shift_by_ms else c
+        c - shift_ms if c > start_ms + shift_ms else c
         for c
         in chunk_starts
     ]

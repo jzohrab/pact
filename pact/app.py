@@ -537,9 +537,10 @@ class BookmarkWindow(object):
         # List of potential "clip start times" within the range.
         self.clip_start_times = pact.wipsplit.get_corrected_chunk_times(
             in_filename = music_file,
-            min_duration_ms = 2000.0,
             start_ms = self.from_val,
-            end_ms = self.to_val
+            end_ms = self.to_val,
+            min_duration_ms = 2000.0,
+            shift_ms = 200.0
         )
 
         # Pre-calc graphing data.  If from_val or to_val change, must recalc.
