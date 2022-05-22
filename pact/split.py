@@ -154,8 +154,8 @@ def segment_start_times(
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(description='Split media into separate chunks wherever silence occurs')
-    parser.add_argument('in_filename', help='Input filename (`-` for stdin)')
+    parser = argparse.ArgumentParser(description='Get start times for clips')
+    parser.add_argument('in_filename', help='Input filename')
     parser.add_argument('--silence-threshold', default=DEFAULT_THRESHOLD, type=int, help='Silence threshold (in dB)')
     parser.add_argument('--silence-duration', default=DEFAULT_DURATION, type=float, help='Silence duration')
     parser.add_argument('--startms', default=0, type=int, help='Start ms')

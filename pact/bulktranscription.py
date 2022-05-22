@@ -1,15 +1,9 @@
 import argparse
-import ffmpeg
-import logging
-import os
-import re
-import subprocess
 import sys
 
 import pact.utils
 import pact.music
 import pact.textmatch
-from pact.plugins.transcription import vosktranscription, unknown
 
 
 def make_bounds(start_times, end_time):
@@ -94,35 +88,30 @@ def get_transcribed_bookmarks(
 
 
 if __name__ == '__main__':
+    import pact.split
+    from pact.plugins.transcription import vosktranscription
 
-    parser = argparse.ArgumentParser(description='Split media into separate chunks wherever silence occurs')
-    parser.add_argument('in_filename', help='Input filename (`-` for stdin)')
-    parser.add_argument('--silence-threshold', default=DEFAULT_THRESHOLD, type=int, help='Silence threshold (in dB)')
-    parser.add_argument('--silence-duration', default=DEFAULT_DURATION, type=float, help='Silence duration')
-    parser.add_argument('--startms', default=0, type=int, help='Start ms')
-    parser.add_argument('--endms', default=120000, type=int, help='End ms')
-    parser.add_argument('-v', dest='verbose', action='store_true', help='Verbose mode')
-
+    parser = argparse.ArgumentParser(description='Bulk transcription test')
+    parser.add_argument('in_filename')
+    parser.add_argument('vosk_model')
     args = parser.parse_args()
-    if args.verbose:
-        logging.basicConfig(level=logging.DEBUG, format='%(levels): %(message)s')
-        logger.setLevel(logging.DEBUG)
-
-    ct = segment_start_times(
+    
+    segment_starts = pact.split.segment_start_times(
         in_filename = args.in_filename,
-        silence_threshold = args.silence_threshold,
-        silence_duration = args.silence_duration,
         min_duration_ms = 5000.0,
-        start_ms = args.startms,
-        end_ms = args.endms
+        start_ms = 0,
+        end_ms = 3 * 60 * 1000
     )
-    durations = [
-        ct[i + 1] - ct[i]
-        for i in range(0, len(ct) - 1)
-    ]
 
-    print(f'count of chunks: {len(ct)}')
-    print(f'min duration: {min(durations)}')
-    print('First 10:')
-    for c in ct[0:10]:
-        print(pact.utils.TimeUtils.time_string(c))
+    strategy = vosktranscription.VoskTranscriptionStrategy(args.vosk_model)
+
+    def print_bookmark(b):
+        print(b.to_dict())
+
+    bookmarks = get_transcribed_bookmarks(
+        args.in_filename,
+        segment_starts,
+        strategy,
+        bookmark_done_callback = print_bookmark)
+
+    print(f'Got {len(bookmarks)} bookmarks.')
