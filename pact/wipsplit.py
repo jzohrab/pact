@@ -101,6 +101,23 @@ def correct_raw(segstarts, min_duration_ms = 5000.0, shift_ms = 200):
     return ret
 
 
+def segment_start_times(
+        in_filename,
+        silence_threshold = DEFAULT_THRESHOLD,
+        silence_duration = DEFAULT_DURATION,
+        min_duration_ms = 5000.0,
+        start_ms = 0,
+        end_ms = 200 * 1000,
+        shift_ms = 200):
+    chunk_starts = raw_start_times(
+        in_filename,
+        silence_threshold,
+        silence_duration,
+        start_ms = start_ms,
+        end_ms = end_ms)
+    return correct_raw(chunk_starts, min_duration_ms, shift_ms)
+
+
 ### TODO - hide this somewhere, or just delete it.
 def transcribe(c, bookmark, bookmark_done_callback):
     def __set_transcription(transcription):
@@ -144,19 +161,6 @@ def transcribe(c, bookmark, bookmark_done_callback):
         on_daemon_thread = False
     )
     return ts.transcription_thread
-
-
-def segment_start_times(
-        in_filename,
-        silence_threshold = DEFAULT_THRESHOLD,
-        silence_duration = DEFAULT_DURATION,
-        min_duration_ms = 5000.0,
-        start_ms = 0,
-        end_ms = 200 * 1000,
-        shift_ms = 200
-):
-    chunk_starts = raw_start_times(in_filename, silence_threshold, silence_duration, start_ms = start_ms, end_ms = end_ms)
-    return correct_raw(chunk_starts, min_duration_ms, shift_ms)
 
 
 def get_bookmarks(
