@@ -30,47 +30,41 @@ DEFAULT_THRESHOLD = -10
 
 # TODO: this belongs in utils
 def get_chunk_starts(in_filename, silence_threshold, silence_duration, start_ms = 0, end_ms = 200 * 1000):
-    ss = (start_ms/1000.0)
-    t = (end_ms - start_ms)/1000.0
 
-    outlines = []
-    cmd = (
-        ffmpeg
-        .input(in_filename, ss=ss, t=t)
-        .filter('silencedetect', n='{}dB'.format(silence_threshold), d=silence_duration)
-        .output('-', format='null')
-        .compile()
-    ) + ['-nostats']  # FIXME: use .nostats() once it's implemented in ffmpeg-python.
-    logger.debug(f'Running command: {subprocess.list2cmdline(cmd)}')
-
-    with subprocess.Popen(
-            cmd,
-            stderr=subprocess.PIPE,
-            stdout = subprocess.PIPE) as p:
-        for line in p.stderr:
-            s = line.decode('utf-8').strip()
-            outlines.append(s)
-
-
-    ## TODO: combine the regex matching below with the data collection
-    ## above?
-    lines = outlines
-
+    chunk_starts = [start_ms]
+        
     # Chunks start when silence ends.
     timematch = r'(?P<deltafromstart>[0-9]+(\.?[0-9]*))'
     end_re = re.compile(f'silence_end: {timematch} ')
 
-    # The time returned is the deltafromstart ... i.e., the actual
+    # The time returned is the deltafromstart; i.e., the actual
     # time is the start_ms + the delta.
     def time_ms(m):
         return start_ms + round(float(m.group('deltafromstart')) * 1000)
 
-    chunk_starts = [start_ms]
-    for line in lines:
+    # ffmpeg outputs e.g. "silence_end: 123.234" to stderr.
+    def add_if_matches_end_re(line):
         end_match = end_re.search(line)
         if end_match:
             e = time_ms(end_match)
             chunk_starts.append(e)
+
+    ffmpegcmd = (
+        ffmpeg
+        .input(in_filename, ss=(start_ms/1000.0), t=(end_ms-start_ms)/1000.0)
+        .filter('silencedetect', n='{}dB'.format(silence_threshold), d=silence_duration)
+        .output('-', format='null')
+        .compile()
+    ) + ['-nostats']  # FIXME: use .nostats() once it's implemented in ffmpeg-python.
+    logger.debug(f'Running command: {subprocess.list2cmdline(ffmpegcmd)}')
+
+    with subprocess.Popen(
+            ffmpegcmd,
+            stderr=subprocess.PIPE,
+            stdout = subprocess.PIPE) as p:
+        for line in p.stderr:
+            s = line.decode('utf-8').strip()
+            add_if_matches_end_re(s)
 
     return chunk_starts
 
