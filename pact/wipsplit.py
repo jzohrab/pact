@@ -28,12 +28,15 @@ DEFAULT_DURATION = 0.3
 DEFAULT_THRESHOLD = -10
 
 
-# TODO: this belongs in utils
-def get_chunk_starts(in_filename, silence_threshold, silence_duration, start_ms = 0, end_ms = 200 * 1000):
+# TODO: this belongs in utils?
+def segment_start_times(in_filename, silence_threshold, silence_duration, start_ms = 0, end_ms = 200 * 1000):
+    """Given an in_filename, find possible split points (phrase start
+    times) using ffmpeg.
 
-    chunk_starts = [start_ms]
-        
-    # Chunks start when silence ends.
+    Note that potential phrase start times are actually when any
+    silence in the clip *ends*.
+    """
+
     timematch = r'(?P<deltafromstart>[0-9]+(\.?[0-9]*))'
     end_re = re.compile(f'silence_end: {timematch} ')
 
@@ -43,11 +46,11 @@ def get_chunk_starts(in_filename, silence_threshold, silence_duration, start_ms 
         return start_ms + round(float(m.group('deltafromstart')) * 1000)
 
     # ffmpeg outputs e.g. "silence_end: 123.234" to stderr.
-    def add_if_matches_end_re(line):
+    def add_if_matches_end_re(line, arr):
         s = line.decode('utf-8').strip()
         end_match = end_re.search(s)
         if end_match:
-            chunk_starts.append(time_ms(end_match))
+            arr.append(time_ms(end_match))
 
     ffmpegcmd = (
         ffmpeg
@@ -58,13 +61,13 @@ def get_chunk_starts(in_filename, silence_threshold, silence_duration, start_ms 
     ) + ['-nostats']  # FIXME: use .nostats() once it's implemented in ffmpeg-python.
     logger.debug(f'Running command: {subprocess.list2cmdline(ffmpegcmd)}')
 
+    chunk_starts = [start_ms]
     with subprocess.Popen(
             ffmpegcmd,
             stderr=subprocess.PIPE,
             stdout = subprocess.PIPE) as p:
         for line in p.stderr:
-            add_if_matches_end_re(line)
-
+            add_if_matches_end_re(line, chunk_starts)
     return chunk_starts
 
 
@@ -122,7 +125,7 @@ def get_corrected_chunk_times(
         start_ms = 0,
         end_ms = 200 * 1000
 ):
-    chunk_starts = get_chunk_starts(in_filename, silence_threshold, silence_duration, start_ms = start_ms, end_ms = end_ms)
+    chunk_starts = segment_start_times(in_filename, silence_threshold, silence_duration, start_ms = start_ms, end_ms = end_ms)
 
     # On my system at least, ffmpeg appears to find the start times a
     # shade too late (i.e., the sound is clipped at the start if I
