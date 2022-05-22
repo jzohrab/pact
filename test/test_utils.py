@@ -5,7 +5,7 @@ import os
 sys.path.append(os.path.abspath(sys.path[0]) + '/../')
 from pact.utils import TimeUtils
 
-class TestUtils(unittest.TestCase):
+class TestUtils_timeutils(unittest.TestCase):
 
     def assert_time_string(self, mins, secs, expected, case_name):
         ms = (mins * 60 + secs) * 1000
