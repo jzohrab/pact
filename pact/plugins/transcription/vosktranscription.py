@@ -177,7 +177,8 @@ class VoskTranscriptionStrategy:
         self.transcription_thread = None
         self.model_dir = model_dir
 
-    def start(self, audiosegment, on_update_transcription, on_update_progress, on_finished):
+
+    def start(self, audiosegment, on_update_transcription, on_update_progress, on_finished, on_daemon_thread = True):
         self.callback = TranscriptionCallback(
             on_update_transcription = on_update_transcription,
             on_update_progress = on_update_progress,
@@ -188,10 +189,15 @@ class VoskTranscriptionStrategy:
             model = Model(self.model_dir)
             transcribe_audiosegment(audiosegment, model, self.callback)
 
-        self.transcription_thread = VoskTranscriptionStrategy.StoppableThread(target=__do_transcription)
-        self.transcription_thread.setDaemon(True)
-        self.transcription_thread.start()
-
+        # Design flaw ... could create separate classes for different
+        # behavious.  Shouldn't change behaviour based on param.
+        # TODO re-org this.
+        if on_daemon_thread:
+            self.transcription_thread = VoskTranscriptionStrategy.StoppableThread(target=__do_transcription)
+            self.transcription_thread.setDaemon(True)
+            self.transcription_thread.start()
+        else:
+            __do_transcription()
 
     def stop(self):
         if not self.transcription_thread:
