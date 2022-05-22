@@ -1,9 +1,15 @@
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 
 # Get version changes via
 # git log -- pact/_version.py
 
 version_notes = """
+0.2.2 (38697cc): Add navigation to natural splits in audio
+
+- finding natural audio break points using ffmpeg
+- added functional bulk-transcription module, though it's
+  not actually included in pact itself yet
+
 0.2.1 (4af3f26): Auto-create temp pact file
 
 - opening mp3 creates a temp pact file, just in case.
