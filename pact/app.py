@@ -77,7 +77,6 @@ class MainWindow:
 
         self.config = config
         self.music_file = None
-        self.clip_start_times = None
         self.song_length_ms = 0
         self.transcription_file = None
 
@@ -210,7 +209,6 @@ class MainWindow:
             bookmark = b,
             allbookmarks = self.bookmarks,
             music_file = self.music_file,
-            clip_start_times = self.clip_start_times,
             song_length_ms = self.song_length_ms,
             transcription_file = self.transcription_file,
             on_close = lambda: self.popup_clip_window_closed(i)
@@ -342,11 +340,6 @@ class MainWindow:
         self.music_file = f
         self.set_title()
 
-        if self.clip_start_times is None:
-            self.clip_start_times = pact.wipsplit.get_corrected_chunk_times(
-                in_filename = f,
-                min_duration_ms = 2000.0)
-
         self.music_player.load_song(f, self.song_length_ms)
         self.bookmarks = [ MainWindow.FullTrackBookmark() ]
         self.reload_bookmark_list()
@@ -403,7 +396,6 @@ class MainWindow:
 
         def __init__(self):
             self.music_file = None
-            self.clip_start_times = None
             self.transcription_file = None
             self.music_player_pos = None
             self.bookmarks = []
@@ -412,7 +404,6 @@ class MainWindow:
         def from_app(mainwindow):
             s = MainWindow.ApplicationState()
             s.music_file = mainwindow.music_file
-            s.clip_start_times = mainwindow.clip_start_times
             s.transcription_file = mainwindow.transcription_file
             s.music_player_pos = mainwindow.music_player.get_pos()
             s.bookmarks = mainwindow.bookmarks
@@ -425,7 +416,6 @@ class MainWindow:
             """For serialization."""
             return {
                 'music_file': self.music_file,
-                'clip_start_times': self.clip_start_times,
                 'transcription_file': self.transcription_file,
                 'music_player_pos': self.music_player_pos,
                 'bookmarks': [ b.to_dict() for b in self.bookmarks ]
@@ -435,7 +425,6 @@ class MainWindow:
         def from_dict(d):
             s = MainWindow.ApplicationState()
             s.music_file = d['music_file']
-            s.clip_start_times = d.get('clip_start_times', None)
             s.transcription_file = d['transcription_file']
             s.music_player_pos = d['music_player_pos']
             s.bookmarks = [ pact.music.Bookmark.from_dict(bd) for bd in d['bookmarks'] ]
@@ -513,7 +502,6 @@ Update '{fieldname}' in the session file and try again."""
             return
 
         self.session_file = sessionfile
-        self.clip_start_times = appstate.clip_start_times
 
         self.load_mp3(appstate.music_file)
 
@@ -530,7 +518,7 @@ Update '{fieldname}' in the session file and try again."""
 class BookmarkWindow(object):
     """Bookmark / clip editing window."""
 
-    def __init__(self, parent, config, bookmark, allbookmarks, music_file, clip_start_times, song_length_ms, transcription_file, on_close):
+    def __init__(self, parent, config, bookmark, allbookmarks, music_file, song_length_ms, transcription_file, on_close):
         self.config = config
         self.bookmark = bookmark
         self.music_file = music_file
@@ -546,11 +534,13 @@ class BookmarkWindow(object):
 
         self.from_val, self.to_val = self.get_slider_from_to(bookmark, allbookmarks)
 
-        # List of the "clip start times" within the range.
-        self.clip_start_times = [
-            t for t in clip_start_times
-            if t >= self.from_val and t <= self.to_val
-        ]
+        # List of potential "clip start times" within the range.
+        self.clip_start_times = pact.wipsplit.get_corrected_chunk_times(
+            in_filename = music_file,
+            min_duration_ms = 2000.0,
+            start_ms = self.from_val,
+            end_ms = self.to_val
+        )
 
         # Pre-calc graphing data.  If from_val or to_val change, must recalc.
         self.signal_plot_data = self.get_signal_plot_data(self.from_val, self.to_val)
