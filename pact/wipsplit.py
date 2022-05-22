@@ -14,7 +14,6 @@ import sys
 
 import pact.utils
 import pact.music
-import pydub.playback
 
 import pact.textmatch
 from pact.plugins.transcription import vosktranscription, unknown
@@ -188,7 +187,6 @@ def get_bookmarks(
         # seg = pact.utils.audiosegment_from_mp3_time_range(in_filename, ct[0], ct[1])
         # transcribe(seg, b, bookmark_done_callback)
 
-        # pydub.playback.play(seg)
         # allthreads.append(t)
         # t.join()
 
