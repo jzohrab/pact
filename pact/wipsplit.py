@@ -29,7 +29,7 @@ DEFAULT_THRESHOLD = -10
 
 
 # TODO: this belongs in utils?
-def segment_start_times(in_filename, silence_threshold, silence_duration, start_ms = 0, end_ms = 200 * 1000):
+def raw_start_times(in_filename, silence_threshold, silence_duration, start_ms = 0, end_ms = 200 * 1000):
     """Given an in_filename, find possible split points (phrase start
     times) using ffmpeg.
 
@@ -72,6 +72,7 @@ def segment_start_times(in_filename, silence_threshold, silence_duration, start_
 
 
 def correct_raw(segstarts, min_duration_ms = 5000.0, shift_ms = 200):
+
     # On my system at least, ffmpeg appears to find the start times a
     # shade too late (i.e., the sound is clipped at the start if I
     # start playing exactly where it ends).  I can't sort out why
@@ -154,7 +155,7 @@ def get_corrected_chunk_times(
         end_ms = 200 * 1000,
         shift_ms = 200
 ):
-    chunk_starts = segment_start_times(in_filename, silence_threshold, silence_duration, start_ms = start_ms, end_ms = end_ms)
+    chunk_starts = raw_start_times(in_filename, silence_threshold, silence_duration, start_ms = start_ms, end_ms = end_ms)
     return correct_raw(chunk_starts, min_duration_ms, shift_ms)
 
 
