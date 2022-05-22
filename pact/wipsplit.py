@@ -34,10 +34,17 @@ def _logged_popen(cmd_line, *args, **kwargs):
 
 
 # TODO: this belongs in utils
-def get_chunk_starts(in_filename, silence_threshold, silence_duration):
+def get_chunk_starts(in_filename, silence_threshold, silence_duration, start_ms = 0, end_ms = 200 * 1000):
+    print(f'start_ms = {start_ms}')
+    print(f'end_ms = {end_ms}')
+    ss = (start_ms/1000.0)
+    print(f'ss = {ss}')
+    t = (end_ms - start_ms)/1000.0
+    print(f't = {t}')
+
     p = _logged_popen(
         (ffmpeg
-            .input(in_filename)  # , ss = 0, t = 200)  # HACK SETTING TIME
+            .input(in_filename, ss=ss, t=t)
             .filter('silencedetect', n='{}dB'.format(silence_threshold), d=silence_duration)
             .output('-', format='null')
             .compile()
@@ -61,13 +68,15 @@ def get_chunk_starts(in_filename, silence_threshold, silence_duration):
     lines = outlines
 
     # Chunks start when silence ends.
-    timematch = r'(?P<time>[0-9]+(\.?[0-9]*))'
+    timematch = r'(?P<deltafromstart>[0-9]+(\.?[0-9]*))'
     end_re = re.compile(f'silence_end: {timematch} ')
 
+    # The time returned is the deltafromstart ... i.e., the actual
+    # time is the start_ms + the delta.
     def time_ms(m):
-        return round(float(m.group('time')) * 1000)
+        return start_ms + round(float(m.group('deltafromstart')) * 1000)
 
-    chunk_starts = [0]
+    chunk_starts = [start_ms]
     for line in lines:
         end_match = end_re.search(line)
         if end_match:
@@ -127,9 +136,11 @@ def get_corrected_chunk_times(
         in_filename,
         silence_threshold = DEFAULT_THRESHOLD,
         silence_duration = DEFAULT_DURATION,
-        min_duration_ms = 5000.0
+        min_duration_ms = 5000.0,
+        start_ms = 0,
+        end_ms = 200 * 1000
 ):
-    chunk_starts = get_chunk_starts(in_filename, silence_threshold, silence_duration)
+    chunk_starts = get_chunk_starts(in_filename, silence_threshold, silence_duration, start_ms = start_ms, end_ms = end_ms)
 
     # On my system at least, ffmpeg appears to find the start times a
     # shade too late (i.e., the sound is clipped at the start if I
@@ -139,7 +150,7 @@ def get_corrected_chunk_times(
     # but that's fine.
     shift_by_ms = 200
     chunk_starts = [
-        c - shift_by_ms if c > shift_by_ms else c
+        c - shift_by_ms if c > start_ms + shift_by_ms else c
         for c
         in chunk_starts
     ]
@@ -192,6 +203,8 @@ if __name__ == '__main__':
     parser.add_argument('in_filename', help='Input filename (`-` for stdin)')
     parser.add_argument('--silence-threshold', default=DEFAULT_THRESHOLD, type=int, help='Silence threshold (in dB)')
     parser.add_argument('--silence-duration', default=DEFAULT_DURATION, type=float, help='Silence duration')
+    parser.add_argument('--startms', default=0, type=int, help='Start ms')
+    parser.add_argument('--endms', default=120000, type=int, help='End ms')
     parser.add_argument('-v', dest='verbose', action='store_true', help='Verbose mode')
 
     args = parser.parse_args()
@@ -200,9 +213,12 @@ if __name__ == '__main__':
         logger.setLevel(logging.DEBUG)
 
     ct = get_corrected_chunk_times(
-        args.in_filename,
-        args.silence_threshold,
-        args.silence_duration
+        in_filename = args.in_filename,
+        silence_threshold = args.silence_threshold,
+        silence_duration = args.silence_duration,
+        min_duration_ms = 5000.0,
+        start_ms = args.startms,
+        end_ms = args.endms
     )
     durations = [
         ct[i + 1] - ct[i]
@@ -212,8 +228,5 @@ if __name__ == '__main__':
     print(f'count of chunks: {len(ct)}')
     print(f'min duration: {min(durations)}')
 
-    for c in ct[0:10]:
-        print(pact.utils.TimeUtils.time_string(c))
-    print('...')
-    for c in ct[-11:-1]:
+    for c in ct:
         print(pact.utils.TimeUtils.time_string(c))
