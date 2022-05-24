@@ -71,7 +71,7 @@ class MainWindow:
 
     def __init__(self, window, config):
         window.title(f'Pact v{__version__}')
-        window.geometry('600x400')
+        window.geometry('600x450')
         self.window = window
         self.window.protocol('WM_DELETE_WINDOW', self.quit)
 
@@ -105,28 +105,50 @@ class MainWindow:
 
         # Layout
         master_frame = Frame(window)
-        master_frame.grid(row=0, column=0, padx=50, pady=20)
+        master_frame.grid(row=0, column=0, padx=30, pady=30)
 
         bk_frame = Frame(master_frame)
-        bk_frame.grid(row=2, column=0, pady=10)
+        bk_frame.grid(row=2, column=0, pady=20, sticky='W')
 
         # The bookmarks saved during play.
+        listbox_frame = Frame(bk_frame)
+        listbox_frame.grid(row = 0, column = 0, sticky='NW')
         self.bookmarks = []
         self.bookmarks_lst = Listbox(
-            bk_frame,
-            width=50,
+            listbox_frame,
+            width=10,
+            height = 10,
+            borderwidth=0, highlightthickness=0,
             selectbackground="yellow",
             selectforeground="black")
-        self.bookmarks_lst.grid(row=0, column=1)
+        self.bookmarks_lst.grid(row=0, column=2)
         self.bookmarks_lst.bind('<<ListboxSelect>>', self.on_bookmark_select)
 
-        scrollbar = ttk.Scrollbar(bk_frame, orient= 'vertical')
-        scrollbar.grid(row=0, column=2, sticky='NS')
+        scrollbar = ttk.Scrollbar(listbox_frame, orient= 'vertical')
+        scrollbar.grid(row=0, column=1, padx=5, sticky='NS')
         self.bookmarks_lst.config(yscrollcommand= scrollbar.set)
         scrollbar.config(command= self.bookmarks_lst.yview)
 
+        deffont = font.nametofont("TkDefaultFont")
+        self.bookmark_transcription_font = font.Font(font=deffont)
+        size = deffont.actual()["size"]
+        self.bookmark_transcription_font.configure(size=size+6)
+        self.bookmark_notes_font = font.Font(font=self.bookmark_transcription_font)
+        self.bookmark_notes_font.configure(slant='italic', size=size+2)
+
+        self.bk_text = scrolledtext.ScrolledText(
+            bk_frame,
+            height = 10, width = 30,
+            wrap=WORD, borderwidth=0,
+            font = self.bookmark_transcription_font,
+            spacing2 = 5,  # Line spacing
+        )
+        self.bk_text.configure(state="disabled")
+        self.bk_text.grid(row=0, column=2, padx=20, sticky='NW')
+        bk_frame.columnconfigure(3, weight=2)
+
         ctl_frame = Frame(master_frame)
-        ctl_frame.grid(row=1, column=0, pady=10)
+        ctl_frame.grid(row=1, column=0, pady=10, sticky='W')
 
         def _make_button(text, column, command):
             b = Button(ctl_frame, text=text, width=8, command=command)
@@ -139,7 +161,7 @@ class MainWindow:
         _make_button('Clip', 4, self.popup_clip_window)
 
         slider_frame = Frame(master_frame)
-        slider_frame.grid(row=0, column=0, pady=5)
+        slider_frame.grid(row=0, column=0, pady=5, sticky='W')
 
         self.slider_var = DoubleVar()
 
@@ -154,9 +176,7 @@ class MainWindow:
 
         self.slider_lbl = Label(slider_frame, text='')
         self.slider_lbl.grid(row=1, column=1, pady=2)
-        def update_slider_label(a, b, c):
-            self.slider_lbl.configure(text=TimeUtils.time_string(self.slider_var.get()))
-        self.slider_var.trace('w', update_slider_label)
+        self.slider_var.trace('w', lambda a,b,c: self.on_slider_var_update())
 
         self.music_player = pact.music.MusicPlayer(self.slider, self.update_play_button_text)
 
@@ -172,6 +192,41 @@ class MainWindow:
         window.bind('<u>', lambda e: self.update_selected_bookmark(float(self.slider.get())))
         window.bind('<d>', lambda e: self.delete_selected_bookmark())
         window.bind('<Return>', lambda e: self.popup_clip_window())
+
+
+    def on_slider_var_update(self):
+        v = self.slider_var.get()
+        self.slider_lbl.configure(text=TimeUtils.time_string(v))
+
+        def _time_within_bookmark_clip(b):
+            if b.clip_bounds_ms is None:
+                return False
+            s, e = b.clip_bounds_ms
+            return v >= s and v <= e
+
+        # Possible for clips to overlap ...  Seach for the bookmarks
+        # in reverse order, and pick the last one.
+        found = None
+        for i in range(len(self.bookmarks) - 1, -1, -1):
+            if _time_within_bookmark_clip(self.bookmarks[i]):
+                found = i
+                break
+
+        if found is None:
+            lst = self.bookmarks_lst
+            lst.selection_clear(0, END)
+            self.display_bookmark_transcription(None)
+            return
+
+        if found != self._selected_bookmark_index():
+            print(f'found != curr which is {self._selected_bookmark_index()}')
+            lst = self.bookmarks_lst
+            lst.selection_clear(0, END)
+            lst.activate(found)
+            lst.select_set(found)
+            lst.see(found)
+            b = self.bookmarks[found]
+            self.display_bookmark_transcription(b)
 
 
     def init_dev(self):
@@ -238,6 +293,7 @@ class MainWindow:
         self.bookmarks_lst.see(i)
         b = self.bookmarks[i]
         self.move_to_bookmark(b)
+        self.display_bookmark_transcription(b)
 
 
     def reload_bookmark_list(self):
@@ -301,11 +357,34 @@ class MainWindow:
         self.reload_bookmark_list()
 
 
+    def display_bookmark_transcription(self, b):
+        t = self.bk_text
+        t.tag_delete('italic')
+        t.configure(state="normal")
+        t.delete(1.0, END)
+
+        if b is None:
+            return
+
+        if b.transcription and b.transcription.strip() != '':
+            t.insert(1.0, b.transcription)
+
+        if b.notes and b.notes.strip() != '':
+            curr_end = t.index(END)
+            t.insert(END, '\n\n')
+            t.insert(END, b.notes)
+            t.tag_add('italic', curr_end, END)
+            t.tag_configure('italic', font=self.bookmark_notes_font)
+
+        t.configure(state="disabled")
+
     def on_bookmark_select(self, event):
         index = self._selected_bookmark_index()
         if not index:
             return
-        self.move_to_bookmark(self.bookmarks[index])
+        b = self.bookmarks[index]
+        self.move_to_bookmark(b)
+        self.display_bookmark_transcription(b)
 
 
     def move_to_bookmark(self, b):

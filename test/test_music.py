@@ -11,41 +11,38 @@ class TestBookmark_display(unittest.TestCase):
     def test_display(self):
         time = (5 * 60 + 14) * 1000 + 870
         b = Bookmark(time)
-        self.assertEqual('Bookmark 05:14.9', b.display())
+        self.assertEqual('05:14.9', b.display())
 
         clipstart = (5 * 60 + 7) * 1000 + 666
+        start_as_text = '05:07.7'
         b.clip_bounds_ms = [clipstart, None]
-        self.assertEqual('Bookmark 05:14.9', b.display())
+        self.assertEqual(start_as_text, b.display())
 
         b.clip_bounds_ms = [clipstart, clipstart + 1000]
-        bounds_as_text = f'05:07.7 - 05:08.7'
-        self.assertEqual(bounds_as_text, b.display())
+        self.assertEqual(start_as_text, b.display())
 
         b.transcription = ''
-        self.assertEqual(bounds_as_text, b.display())
+        self.assertEqual(start_as_text, b.display())
 
-        clipstart_text = '05:07.7'
-        s = 'long string of stuff'
-        b.transcription = s
-        self.assertEqual(f'{clipstart_text}  "{s}"', b.display(100))
+        pencil = '\u270E'
+        b.transcription = 'long string of stuff'
+        self.assertEqual(f'{start_as_text} {pencil}', b.display())
 
         b.exported = True
         checkmark = '\u2713'
-        self.assertEqual(f'{checkmark} {clipstart_text}  "{s}"', b.display(100))
+        self.assertEqual(f'{checkmark} {start_as_text} {pencil}', b.display())
 
 
-    def test_square_bracketed_text_is_omitted(self):
-        """
-        textmatch.py sometimes adds context in square brackets before and
-        after a clip, but when listing the bookmarks don't bother
-        showing that, just show what the clip text actually was.
-        """
+    def test_square_bracketed_text_is_ignored(self):
         time = (5 * 60 + 14) * 1000 + 870
         b = Bookmark(time)
         b.clip_bounds_ms = [time, time + 1000]
         b.transcription = "[Some text] ... and things ... [ok]"
-        self.assertEqual(f'05:14.9  "... and things ..."', b.display(100))
-        self.assertEqual(f'05:14.9  "... and th ..."', b.display(10))
+
+        pencil = '\u270E'
+        self.assertEqual(f'05:14.9 {pencil}', b.display())
+        self.assertEqual(f'05:14.9 {pencil}', b.display())
+
 
 class TestBookmark_slider_pos_ms(unittest.TestCase):
 

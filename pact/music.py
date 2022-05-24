@@ -259,46 +259,21 @@ class Bookmark:
         b.notes = d.get('notes', None)
         return b
 
-    def __transcription_display(self, clip_at):
+    def display(self):
+        """String description of this for display in list boxes."""
+        if self.clip_bounds_ms is None:
+            return TimeUtils.time_string(self.position_ms)
+
+        s, e = self.clip_bounds_ms
+        ret = TimeUtils.time_string(s)
+
         t = self.transcription
-        if t is None or t.strip() == '':
-            return None
-
-        # Only use the first line, b/c that's all that can be
-        # displayed anyway.
-        t = t.split('\n')[0]
-
-        t = re.sub("\[.*?\]", '', t).strip()
-
-        ret = t[:clip_at]
-        if ret != t:
-            ret += ' ...'
-        return ret
-
-    def __line_display(self, clip_at):
-        b = self.clip_bounds_ms
-        if b is None:
-            return None
-        s, e = b
-        if s is None or e is None:
-            return None
-        s = TimeUtils.time_string(s)
-        e = TimeUtils.time_string(e)
-        ret = f"{s} - {e}"
-
-        t = self.__transcription_display(clip_at)
-        if t:
-            ret = f"{s}  \"{t}\""
+        if t is not None and t.strip() != '':
+            pencil = '\u270E'
+            ret = f"{ret} {pencil}"
 
         if self.exported:
             checkmark = '\u2713'
             ret = f"{checkmark} {ret}"
 
         return ret
-
-    def display(self, clip_at = 50):
-        """String description of this for display in list boxes."""
-        cd = self.__line_display(clip_at)
-        if cd is not None:
-            return cd
-        return f"Bookmark {TimeUtils.time_string(self.position_ms)}"
