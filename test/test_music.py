@@ -44,6 +44,19 @@ class TestBookmark_display(unittest.TestCase):
         self.assertEqual(f'05:14.9 {pencil}', b.display())
 
 
+    def test_note_with_angle_bracket_showed_in_display(self):
+        time = (5 * 60 + 14) * 1000 + 870
+        b = Bookmark(time)
+        b.clip_bounds_ms = [time, time + 1000]
+        self.assertEqual('05:14.9', b.display())
+
+        b.notes = 'nobracket'
+        self.assertEqual('05:14.9', b.display())
+
+        b.notes = '<something>'
+        self.assertEqual('something', b.display())
+
+
 class TestBookmark_slider_pos_ms(unittest.TestCase):
 
     def test_slider_pos_depends_on_bounds(self):

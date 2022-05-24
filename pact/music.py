@@ -260,6 +260,10 @@ class Bookmark:
         return b
 
     def display(self):
+        checkNote = self.notes or ''
+        if checkNote.startswith('<') and checkNote.endswith('>'):
+            return checkNote[1:-1]
+
         """String description of this for display in list boxes."""
         if self.clip_bounds_ms is None:
             return TimeUtils.time_string(self.position_ms)
