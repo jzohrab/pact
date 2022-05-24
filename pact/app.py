@@ -219,14 +219,17 @@ class MainWindow:
             return
 
         if found != self._selected_bookmark_index():
-            print(f'found != curr which is {self._selected_bookmark_index()}')
-            lst = self.bookmarks_lst
-            lst.selection_clear(0, END)
-            lst.activate(found)
-            lst.select_set(found)
-            lst.see(found)
+            self.activate_bookmark_list_index(found)
             b = self.bookmarks[found]
             self.display_bookmark_transcription(b)
+
+
+    def activate_bookmark_list_index(self, i):
+        lst = self.bookmarks_lst
+        lst.selection_clear(0, END)
+        lst.activate(i)
+        lst.select_set(i)
+        lst.see(i)
 
 
     def init_dev(self):
@@ -378,12 +381,19 @@ class MainWindow:
 
         t.configure(state="disabled")
 
+
     def on_bookmark_select(self, event):
         index = self._selected_bookmark_index()
         if not index:
             return
         b = self.bookmarks[index]
         self.move_to_bookmark(b)
+        # Moving updates the slider, which calls on_slider_var_update
+        # ...  which can deselect the bookmark.  This feels like a
+        # design flaw, there will be a better way to handle this
+        # (e.g., separate automatic updates from user-event-related
+        # updates), but this works fine for now.
+        self.activate_bookmark_list_index(index)
         self.display_bookmark_transcription(b)
 
 
