@@ -4,6 +4,10 @@ __version__ = "0.2.2"
 # git log -- pact/_version.py
 
 version_notes = """
+0.2.3 (7d1f527): Show bookmark text, notes on main window
+
+- layout change
+
 0.2.2 (38697cc): Add navigation to natural splits in audio
 
 - finding natural audio break points using ffmpeg
