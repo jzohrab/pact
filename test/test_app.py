@@ -107,6 +107,34 @@ class TestApp_add_bookmarks(TKinterTestCase):
         b = self.app.bookmarks[1]
         self.assertEqual(sliderpos, b.position_ms, 'position ok.')
 
+
+    def test_bookmarks_maintained_in_effective_time_order(self):
+        self.app.load_mp3('test/assets/testing.mp3')
+        self.pump_events()
+        self.assertEqual(len(self.app.bookmarks), 1, 'one entry, the song itself')
+
+        def add_bookmark(slider_pos_ms):
+            self.app.reposition(slider_pos_ms)
+            self.pump_events()
+            self.app.window.event_generate('<m>')
+            self.pump_events()
+
+        add_bookmark(5000)
+        add_bookmark(6000)
+        add_bookmark(4000)
+
+        self.assertEqual(len(self.app.bookmarks), 4, '3 bookmarks added')
+
+        def assert_bookmark_ms(index, expected):
+            b = self.app.bookmarks[index]
+            self.assertEqual(expected, b.position_ms)
+        assert_bookmark_ms(1, 4000)
+        assert_bookmark_ms(2, 5000)
+        assert_bookmark_ms(3, 6000)
+
+        self.assertEqual(self.app._selected_bookmark_index(), 1, '4000 added last, so selected')
+
+
 class TestApp_clip_window(TKinterTestCase):
 
     def test_open_clip_window_for_bookmark(self):

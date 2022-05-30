@@ -322,16 +322,23 @@ class MainWindow:
             return
         self.bookmarks.append(b)
 
+        self.bookmarks = sorted(self.bookmarks, key = lambda b: b.effective_pos_ms)
+
         if self.config.autosave:
             self.save_pact_file()
 
-        i = len(self.bookmarks) - 1
-        lst = self.bookmarks_lst
-        lst.selection_clear(0, END)
-        lst.insert(END, b.display())
-        lst.activate(i)
-        lst.select_set(i)
-        lst.see(i)
+        self.reload_bookmark_list()
+
+        # The just-added bookmark should be selected.
+        i = None
+        for i in range(0, len(self.bookmarks)):
+            if id(self.bookmarks[i]) == id(b):
+                break
+        if i:
+            self.activate_bookmark_list_index(i)
+        else:
+            # TODO: log this, don't just print it.
+            print("Couldn't find index??")
 
 
     def _selected_bookmark_index(self):
