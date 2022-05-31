@@ -245,12 +245,19 @@ class Bookmark:
 
     def to_dict(self):
         """For serialization"""
-        return self.__dict__
+
+        # Add nice-to-have info.
+        c = self.clip_bounds_ms
+        extra = {
+            'position_str': TimeUtils.time_string(self.position_ms),
+            'clip_str': TimeUtils.interval_string(*c) if c else None
+        }
+        return {**self.__dict__, **extra}
 
     @staticmethod
     def from_dict(d):
         """For deserialization."""
-        # print(f'dict: {d}')
+        # Note the extra detail is ignored.
         p = d['position_ms']
         b = Bookmark(p)
         b.clip_bounds_ms = d['clip_bounds_ms']

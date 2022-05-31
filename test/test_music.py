@@ -96,6 +96,14 @@ class TestBookmark_serialization(unittest.TestCase):
         self.assertEqual(b.notes, jb.notes)
         self.assertFalse(jb.exported, 'backwards-compat check')
 
+    def test_human_readable_times_included_in_dict(self):
+        """Nice-to-have when looking at session file."""
+        b = Bookmark(54000)
+        b.clip_bounds_ms = [55000.0, 66000.0]
+        d = b.to_dict()
+        self.assertEqual(d['position_str'], '00:54.0', 'position')
+        self.assertEqual(d['clip_str'], '00:55.0 - 01:06.0', 'clip')
+
     def test_to_from_dict_exported_set(self):
         b = Bookmark(42.0)
         b.clip_bounds_ms = [55.0, 66.0]
