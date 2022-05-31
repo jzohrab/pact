@@ -16,9 +16,13 @@ class TimeUtils:
     @staticmethod
     def time_string(ms):
         total_seconds = round(ms / 1000.0, 1)
-        mins = int(total_seconds) // 60
+        s = int(total_seconds)
+        hrs = s // 3600
+        mins = (s - hrs * 3600) // 60
         secs = total_seconds % 60
-        return '{:02d}:{:04.1f}'.format(mins, secs)
+        if hrs == 0:
+            return '{:02d}:{:04.1f}'.format(mins, secs)
+        return '{:d}:{:02d}:{:04.1f}'.format(hrs, mins, secs)
 
     @staticmethod
     def interval_string(s, e, ifInvalid = 'n/a'):
