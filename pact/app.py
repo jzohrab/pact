@@ -129,6 +129,9 @@ class MainWindow:
         self.bookmarks_lst.config(yscrollcommand= scrollbar.set)
         scrollbar.config(command= self.bookmarks_lst.yview)
 
+        self.bookmark_number = Label(listbox_frame, text='', anchor='center', justify='center')
+        self.bookmark_number.grid(row=1, column=2, pady=5, sticky='W')
+
         deffont = font.nametofont("TkDefaultFont")
         self.bookmark_transcription_font = font.Font(font=deffont)
         size = deffont.actual()["size"]
@@ -389,10 +392,16 @@ class MainWindow:
         t.configure(state="disabled")
 
 
+    def update_bookmark_number(self, i):
+        txt = f"({i + 1}/{len(self.bookmarks)})"
+        self.bookmark_number.configure(text=txt)
+
+
     def on_bookmark_select(self, event):
         index = self._selected_bookmark_index()
         if not index:
             return
+        self.update_bookmark_number(index)
         b = self.bookmarks[index]
         self.move_to_bookmark(b)
         # Moving updates the slider, which calls on_slider_var_update
