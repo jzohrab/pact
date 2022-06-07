@@ -9,6 +9,28 @@ import shutil
 import ffmpeg
 import pydub
 from importlib import import_module
+import time
+
+
+class Profile(object):
+    """Convenience for finding bottlenecks."""
+    def __init__(self, name):
+        self.name = name
+        self.start = time.perf_counter()
+        self.stopped = False
+
+    def printElapsed(self):
+        e = time.perf_counter()
+        delta = e - self.start
+        # print(f'{self.name}: {delta}')
+
+    def __del__(self):
+        if not self.stopped:
+            self.printElapsed()
+
+    def stop(self):
+        self.stopped = True
+        self.printElapsed()
 
 
 class TimeUtils:

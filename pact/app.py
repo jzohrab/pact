@@ -4,10 +4,12 @@ import configparser
 import json
 import matplotlib.pyplot as plt
 import numpy as np
+import ffmpeg
 import os
 import pickle
 import tkinter.ttk as ttk
 import wave
+import subprocess
 
 from matplotlib import pyplot
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -22,6 +24,7 @@ from tkinter import messagebox
 
 import pact.music
 import pact.utils
+from pact.utils import Profile
 import pact.widgets
 from pact.utils import TimeUtils
 from pact._version import __version__
@@ -639,6 +642,7 @@ class BookmarkWindow(object):
 
         self.from_val, self.to_val = self.get_slider_from_to(bookmark, allbookmarks)
 
+        breaks = Profile('breaks')
         # List of potential "clip start times" within the range.
         self.candidate_break_times = pact.split.segment_start_times(
             in_filename = music_file,
@@ -647,9 +651,12 @@ class BookmarkWindow(object):
             min_duration_ms = 2000.0,
             shift_ms = 200.0
         )
+        breaks.stop()
 
         # Pre-calc graphing data.  If from_val or to_val change, must recalc.
+        pplot = Profile('get_signal_plot_data')
         self.signal_plot_data = self.get_signal_plot_data(self.from_val, self.to_val)
+        pplot.stop()
 
         # Start the clip at the bookmark value for now, good enough.
         clip_bounds = bookmark.clip_bounds_ms
@@ -667,8 +674,10 @@ class BookmarkWindow(object):
         slider_frame = Frame(self.root)
         slider_frame.grid(row=1, column=0, pady=5)
 
+        pgrid = Profile('plot and grid')
         w, fig = self.plot(slider_frame, 7)
         w.grid(row=0, column=0, pady=5)
+        pgrid.stop()
 
         # Keep a handle on fig, so can close it when the window
         # closes; otherwise, this eventually gets a warning.
@@ -1111,31 +1120,23 @@ class BookmarkWindow(object):
 
 
     def get_signal_plot_data(self, from_val, to_val):
-        sound = pact.utils.audiosegment_from_mp3_time_range(self.music_file, from_val, to_val)
-        sound = sound.set_channels(1)
-
-        # Hack for plotting: export to a .wav file.  I can't
-        # immediately figure out how to directly plot an mp3 (should
-        # be possible, as I have all the data), but there are several
-        # examples about plotting .wav files,
-        # e.g. https://www.geeksforgeeks.org/plotting-various-sounds-on-graphs-using-python-and-matplotlib/
-        signal = None
-        f_rate = 0
-        with NamedTemporaryFile("w+b", suffix=".wav") as f:
-            exported = sound.export(f.name, format='wav')
-            exported.close()
-            with wave.open(f.name, "r") as raw:
-                f_rate = raw.getframerate()
-                signal = raw.readframes(-1)
-                signal = np.frombuffer(signal, dtype = 'int16')
-                raw.close()
+        # ref https://github.com/kkroening/ffmpeg-python/issues/78
+        cmd = (
+            ffmpeg
+            .input(self.music_file, ss=(from_val/1000.0), t=(to_val-from_val)/1000.0)
+            .output('pipe:', format='wav')
+            .compile()
+        ) + ['-nostats'],  # FIXME: use .nostats() once it's implemented in ffmpeg-python.
+        sp = subprocess.Popen(cmd[0], stderr = subprocess.PIPE, stdout = subprocess.PIPE)
+        out = sp.communicate()[0]
+        signal2 = np.frombuffer(out, 'int16')
 
         time = np.linspace(
             from_val, # start
             to_val,
-            num = len(signal)
+            num = len(signal2)
         )
-        return (time, signal)
+        return (time, signal2)
 
 
     def plot(self, frame, width_inches):
@@ -1156,10 +1157,11 @@ class BookmarkWindow(object):
 
         time, signal = self.signal_plot_data
 
+        a = Profile('plotting')
         plot1.plot(time, signal)
-
         for t in self.candidate_break_times:
             plot1.axvline(x=t, color='red')
+        a.stop()
 
         canvas = FigureCanvasTkAgg(fig, master = frame)
 

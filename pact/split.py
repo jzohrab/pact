@@ -14,6 +14,7 @@ import subprocess
 import sys
 
 import pact.utils
+from pact.utils import Profile
 import pact.music
 import pact.textmatch
 from pact.plugins.transcription import vosktranscription, unknown
@@ -62,6 +63,7 @@ def raw_start_times(in_filename, silence_threshold, silence_duration, start_ms =
     ) + ['-nostats']  # FIXME: use .nostats() once it's implemented in ffmpeg-python.
     logger.debug(f'Running command: {subprocess.list2cmdline(ffmpegcmd)}')
 
+    ppopen = Profile('split.subprocess')
     chunk_starts = [start_ms]
     with subprocess.Popen(
             ffmpegcmd,
@@ -69,6 +71,7 @@ def raw_start_times(in_filename, silence_threshold, silence_duration, start_ms =
             stdout = subprocess.PIPE) as p:
         for line in p.stderr:
             add_if_matches_end_re(line, chunk_starts)
+    ppopen.stop()
     return chunk_starts
 
 
