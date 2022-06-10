@@ -166,3 +166,14 @@ def anki_card_export(
         raise RuntimeError(e)
 
     return r
+
+
+def play_beep():
+    """Make a beep sound."""
+    # Note using sys.stdout instead of print
+    # to suppress console line feeds,
+    # and flushing immediately to have the beep
+    # sound right away.
+    # Not sure if this is mac-only.
+    sys.stdout.write('\a')
+    sys.stdout.flush()

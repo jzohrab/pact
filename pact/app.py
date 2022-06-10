@@ -374,15 +374,16 @@ class MainWindow:
 
 
     def display_bookmark_transcription(self, b):
+        if b is None:
+            return
+
         t = self.bk_text
         t.tag_delete('italic')
         t.configure(state="normal")
         t.delete(1.0, END)
 
-        if b is None:
-            return
-
         if b.transcription and b.transcription.strip() != '':
+            pact.utils.play_beep()
             t.insert(1.0, b.transcription)
 
         if b.notes and b.notes.strip() != '':
