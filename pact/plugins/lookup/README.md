@@ -1,8 +1,12 @@
 # Lookup plugins.
 
 The lookup should be a python script (.py) that defines a method,
-'lookup(string)', and returns a string which is the lookup result.
-The string result is then shown in a popup text box.
+'lookup(string)', and either returns a string, or None.
+
+If it returns a string as the lookup result, this is shown in a popup text box.
+
+If it returns None, nothing happens -- it assumes that a separate page
+or app has been opened.
 
 The plugin can do whatever it needs to get the result - scrap web
 pages, call internal dictionaries, whatever.  But the script should be

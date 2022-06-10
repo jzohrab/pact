@@ -1063,13 +1063,19 @@ class BookmarkWindow(object):
         except Exception as err:
             result = f'Error during lookup: {err}'
 
-        d = LookupWindow(
-            parent = self.root,
-            term = term,
-            content = result
-        )
-        self.root.wait_window(d.root)
-        d.root.grab_release()
+        if result is not None:
+            # A string result was returned, so show this in a popup.
+            d = LookupWindow(
+                parent = self.root,
+                term = term,
+                content = result
+            )
+            self.root.wait_window(d.root)
+            d.root.grab_release()
+        else:
+            # None was returned, so assume that a separate app has
+            # been opened.
+            pass
 
 
     def export(self):
