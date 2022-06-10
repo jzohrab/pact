@@ -264,6 +264,14 @@ python -m unittest discover -s test -k save_session
 
 See `python -m unittest -h` for more flags.
 
+## Releases
+
+* Make sure all tests pass
+* Update CHANGELOG.md, pact/_version.py
+* Commit
+* Tag (e.g. `git tag v0.2.0 1f0f2a6`)
+* `git push origin <tagname>`
+
 
 ## Contributing
 
