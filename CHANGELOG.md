@@ -2,6 +2,14 @@
 
 ## [0.2.4] 2022-06-10
 
+* Add changelog
+* Handle None return for lookup plugins.
+* Play system beep when showing new bookmark text.
+* Speed up graphing data by avoiding pydub.
+* Add bookmark counter.
+* Add human-readable times to pact file, nice to have.
+* Bookmark list should remain in sorted order.
+* Bugfixes
 
 ## [0.2.3] 2022-05-23
 
