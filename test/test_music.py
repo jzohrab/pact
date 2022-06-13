@@ -28,6 +28,10 @@ class TestBookmark_display(unittest.TestCase):
         b.transcription = 'long string of stuff'
         self.assertEqual(f'{start_as_text} {pencil}', b.display())
 
+        b.exported = 'Pending'
+        pending = '\u2026'
+        self.assertEqual(f'{pending} {start_as_text} {pencil}', b.display())
+
         b.exported = True
         checkmark = '\u2713'
         self.assertEqual(f'{checkmark} {start_as_text} {pencil}', b.display())
@@ -103,6 +107,14 @@ class TestBookmark_serialization(unittest.TestCase):
         d = b.to_dict()
         self.assertEqual(d['position_str'], '00:54.0', 'position')
         self.assertEqual(d['clip_str'], '00:55.0 - 01:06.0', 'clip')
+
+    def test_to_from_dict_exported_pending(self):
+        b = Bookmark(42.0)
+        b.clip_bounds_ms = [55.0, 66.0]
+        b.transcription = '"Here is some transcription with \n\n things."'
+        b.exported = 'Pending'
+        jb = Bookmark.from_dict(b.to_dict())
+        self.assertEqual(jb.exported, b.exported)
 
     def test_to_from_dict_exported_set(self):
         b = Bookmark(42.0)

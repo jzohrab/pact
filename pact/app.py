@@ -22,6 +22,7 @@ from tkinter import filedialog
 import tkinter.scrolledtext as scrolledtext
 from tkinter import messagebox
 
+import pact.anki
 import pact.music
 import pact.utils
 from pact.utils import Profile
@@ -268,7 +269,7 @@ class MainWindow:
         self.music_player.pause()
         self.menubar.entryconfig(1, state = 'disabled')
         popup = BookmarkWindow(
-            parent = self.window,
+            parent = self,
             config = self.config,
             bookmark = b,
             allbookmarks = self.bookmarks,
@@ -307,12 +308,14 @@ class MainWindow:
 
     def reload_bookmark_list(self):
         selected_index = self._selected_bookmark_index()
-        self.bookmarks_lst.delete(0, END)
+        lst = self.bookmarks_lst
+        lst.delete(0, END)
         for b in self.bookmarks:
-            self.bookmarks_lst.insert(END, b.display())
+            lst.insert(END, b.display())
         if selected_index:
-            self.bookmarks_lst.activate(selected_index)
-            self.bookmarks_lst.select_set(selected_index)
+            lst.activate(selected_index)
+            lst.select_set(selected_index)
+            lst.see(selected_index)
 
 
     def add_bookmark_at_current(self, m = None):
@@ -383,8 +386,9 @@ class MainWindow:
         t.delete(1.0, END)
 
         if b.transcription and b.transcription.strip() != '':
-            pact.utils.play_beep()
             t.insert(1.0, b.transcription)
+            if self.music_player.state is pact.music.PlayerState.PLAYING:
+                pact.utils.play_beep()
 
         if b.notes and b.notes.strip() != '':
             curr_end = t.index(END)
@@ -636,10 +640,10 @@ class BookmarkWindow(object):
         self.on_close = on_close
 
         self.parent = parent
-        self.root=Toplevel(parent)
+        self.root=Toplevel(parent.window)
         self.root.protocol('WM_DELETE_WINDOW', self.ok)
         self.root.geometry('550x450')
-        self.reposition_popup(parent, 50, 50)
+        self.reposition_popup(parent.window, 50, 50)
 
         self.from_val, self.to_val = self.get_slider_from_to(bookmark, allbookmarks)
 
@@ -827,7 +831,7 @@ class BookmarkWindow(object):
         # Wait for visibility or grab_set doesn't seem to work.
         self.root.wait_visibility()
         self.root.grab_set()
-        self.root.transient(parent)
+        self.root.transient(parent.window)
 
         if self.config.autoplayclips:
             self.play_clip()
@@ -1087,19 +1091,22 @@ class BookmarkWindow(object):
             print('no clip')
             return
 
-        tag = pact.utils.anki_tag_from_filename(self.music_file)
-        try:
-            r = pact.utils.anki_card_export(
-                audiosegment = c,
-                ankiconfig = self.config['Anki'],
-                transcription = self.bookmark.transcription,
-                notes = self.bookmark.notes,
-                tag = tag
-            )
-            self.bookmark.exported = True
-            self.ok()
-        except Exception as e:
-            messagebox.showerror(title='Anki export failed', message=e)
+        def _onSuccess(b):
+            self.parent.reload_bookmark_list()
+            # Possible race condition here, ignoring for now.
+            # TODO fixme
+            self.parent.save_pact_file()
+
+        tag = pact.anki.anki_tag_from_filename(self.music_file)
+        pact.anki.export(
+            bookmark = self.bookmark,
+            audiosegment = c,
+            tag = tag,
+            ankiconfig = self.config['Anki'],
+            onSuccess = _onSuccess,
+            onError = lambda e: messagebox.showerror(title='Anki export failed', message=e)
+        )
+        self.ok()
 
 
     def play_pause(self):

@@ -283,7 +283,10 @@ class Bookmark:
             pencil = '\u270E'
             ret = f"{ret} {pencil}"
 
-        if self.exported:
+        if self.exported == 'Pending':
+            pending = '\u2026'
+            ret = f"{pending} {ret}"
+        elif self.exported == True:
             checkmark = '\u2713'
             ret = f"{checkmark} {ret}"
 
