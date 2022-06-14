@@ -81,6 +81,7 @@ class MainWindow:
 
         self.config = config
         self.music_file = None
+        # self.candidate_break_times = None
         self.song_length_ms = 0
         self.transcription_file = None
 
@@ -454,12 +455,34 @@ class MainWindow:
         self.set_title()
 
         self.music_player.load_song(f, self.song_length_ms)
+
+        # Possible future optimization: calc and save candidate break
+        # times in advance.
+        # self.candidate_break_times = self.__get_candidate_break_times()
+
         self.bookmarks = [ MainWindow.FullTrackBookmark() ]
         self.reload_bookmark_list()
 
         if self.session_file is None:
             self.session_file = f"{self.music_file}.temp.pact"
             self.save_pact_file()
+
+
+    def __get_candidate_break_times(self):
+        # TODO: show progress bar on GUI.
+        ref_start = 0
+        def onChunkStartFound(ms):
+            nonlocal ref_start
+            if (ms - ref_start > 60000):
+                print(pact.utils.TimeUtils.time_string(ms))
+                ref_start = ms
+
+        return pact.split.segment_start_times(
+            in_filename = self.music_file,
+            min_duration_ms = 2000.0,
+            shift_ms = 200.0,
+            onChunkStartFound = onChunkStartFound
+        )
 
 
     def load_transcription(self):
@@ -1135,6 +1158,7 @@ class BookmarkWindow(object):
 
     def get_signal_plot_data(self, from_val, to_val):
         # ref https://github.com/kkroening/ffmpeg-python/issues/78
+        p = Profile('get rawsignal')
         cmd = (
             ffmpeg
             .input(self.music_file, ss=(from_val/1000.0), t=(to_val-from_val)/1000.0)
@@ -1144,11 +1168,13 @@ class BookmarkWindow(object):
         sp = subprocess.Popen(cmd[0], stderr = subprocess.PIPE, stdout = subprocess.PIPE)
         out = sp.communicate()[0]
         rawsignal = np.frombuffer(out, 'int16')
+        p.stop()
 
         # Since we're only using the signal to generate a plot, we
         # don't need real accuracy.  Get the min and max in each
         # window of the raw data ...  that suffices for visual plots,
         # and is much faster.
+        p = Profile('Make newsig')
         def chunks(lst, n):
             """Yield successive n-sized chunks from lst."""
             for i in range(0, len(lst), n):
@@ -1156,6 +1182,7 @@ class BookmarkWindow(object):
         window_size = 10000  # arbitrary
         minmax = [ [ min(c), max(c) ] for c in chunks(rawsignal, window_size) ]
         newsig = [j for sub in minmax for j in sub]  # flatten
+        p.stop()
 
         time = np.linspace(
             from_val, # start

@@ -21,7 +21,7 @@ from pact.plugins.transcription import vosktranscription, unknown
 
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 logger = logging.getLogger(__file__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.WARNING)
 
 
 # Duration for splits.
@@ -31,7 +31,14 @@ DEFAULT_DURATION = 0.3
 DEFAULT_THRESHOLD = -10
 
 
-def raw_start_times(in_filename, silence_threshold, silence_duration, start_ms = 0, end_ms = 200 * 1000):
+def raw_chunks(
+        in_filename,
+        silence_threshold,
+        silence_duration,
+        start_ms = None,
+        end_ms = None,
+        onChunkStartFound = lambda ms: None
+):
     """Given an in_filename, find possible split points (phrase start
     times) using ffmpeg.
 
@@ -39,24 +46,15 @@ def raw_start_times(in_filename, silence_threshold, silence_duration, start_ms =
     silence in the clip *ends*.
     """
 
-    timematch = r'(?P<deltafromstart>[0-9]+(\.?[0-9]*))'
-    end_re = re.compile(f'silence_end: {timematch} ')
-
-    # The time returned is the deltafromstart; i.e., the actual
-    # time is the start_ms + the delta.
-    def time_ms(m):
-        return start_ms + round(float(m.group('deltafromstart')) * 1000)
-
-    # ffmpeg outputs e.g. "silence_end: 123.234" to stderr.
-    def add_if_matches_end_re(line, arr):
-        s = line.decode('utf-8').strip()
-        end_match = end_re.search(s)
-        if end_match:
-            arr.append(time_ms(end_match))
+    kwargs = {}
+    if start_ms is not None:
+        kwargs['ss'] = (start_ms/1000.0)
+    if end_ms is not None:
+        kwargs['t'] = (end_ms-start_ms)/1000.0
 
     ffmpegcmd = (
         ffmpeg
-        .input(in_filename, ss=(start_ms/1000.0), t=(end_ms-start_ms)/1000.0)
+        .input(in_filename, **kwargs)
         .filter('silencedetect', n='{}dB'.format(silence_threshold), d=silence_duration)
         .output('-', format='null')
         .compile()
@@ -64,15 +62,70 @@ def raw_start_times(in_filename, silence_threshold, silence_duration, start_ms =
     logger.debug(f'Running command: {subprocess.list2cmdline(ffmpegcmd)}')
 
     ppopen = Profile('split.subprocess')
-    chunk_starts = [start_ms]
+
+    timematch = r'(?P<deltafromstart>[0-9]+(\.?[0-9]*))'
+    start_re = re.compile(f'silence_start: {timematch}$')
+    end_re = re.compile(f'silence_end: {timematch} ')
+
+    # The time returned is the deltafromstart; i.e., the actual
+    # time is the start_ms + the delta.
+    base_start = start_ms or 0.
+    def time_ms(m):
+        return base_start + round(float(m.group('deltafromstart')) * 1000)
+
+    # Chunks start when silence ends, and chunks end when silence starts.
+    chunk_starts = []
+    chunk_ends = []
     with subprocess.Popen(
             ffmpegcmd,
             stderr=subprocess.PIPE,
             stdout = subprocess.PIPE) as p:
+        # ffmpeg outputs e.g. "silence_end: 123.234" to stderr.
         for line in p.stderr:
-            add_if_matches_end_re(line, chunk_starts)
+            s = line.decode('utf-8').strip()
+            end_match = end_re.search(s)
+            start_match = start_re.search(s)
+            if start_match or end_match:
+                logger.info(s)
+            else:
+                logger.debug(s)
+            if start_match:
+                t = time_ms(start_match)
+                logger.info(f'start ms: {t}')
+                chunk_ends.append(time_ms(start_match))
+                if len(chunk_starts) == 0:
+                    # Started with non-silence.
+                    chunk_starts.append(start_ms or 0.)
+            if end_match:
+                t = time_ms(end_match)
+                logger.info(f'end ms: {t}')
+                onChunkStartFound(t)
+                chunk_starts.append(t)
+
+    if len(chunk_starts) == 0:
+        # No silence found.
+        chunk_starts.append(start_ms)
+
+    if len(chunk_starts) > len(chunk_ends):
+        # Finished with non-silence.
+        chunk_ends.append(end_ms or 10 * 3600 * 1000.)
+
     ppopen.stop()
-    return chunk_starts
+    chunks = list(zip(chunk_starts, chunk_ends))
+    return [
+        c for c in chunks
+        if c[0] < c[1]
+    ]
+
+
+def silences(chunks):
+    """Get the silences between the chunks, for stats."""
+    if len(chunks) <= 1:
+        return []
+    return [
+        chunks[i+1][0] - chunks[i][1]
+        for i in range(0, len(chunks) - 1)
+    ]
 
 
 def sensible_start_times(start_times, min_duration):
@@ -140,51 +193,88 @@ def correct_raw(segstarts, min_duration_ms = 5000.0, shift_ms = 200):
 
 def segment_start_times(
         in_filename,
+        start_ms = None,
+        end_ms = None,
         silence_threshold = DEFAULT_THRESHOLD,
         silence_duration = DEFAULT_DURATION,
         min_duration_ms = 5000.0,
-        start_ms = 0,
-        end_ms = 200 * 1000,
-        shift_ms = 200):
-    chunk_starts = raw_start_times(
+        shift_ms = 200,
+        onChunkStartFound = lambda ms: None):
+    cs = raw_chunks(
         in_filename,
         silence_threshold,
         silence_duration,
         start_ms = start_ms,
-        end_ms = end_ms)
+        end_ms = end_ms,
+        onChunkStartFound = onChunkStartFound)
+    chunk_starts = [c[0] for c in cs]
     return correct_raw(chunk_starts, min_duration_ms, shift_ms)
 
 
 if __name__ == '__main__':
+    # Sample calls:
+    # python -m pact.split samples/input.mp3 --endms 1000 -v --raw
+    # python -m pact.split samples/input.mp3 --endms 1000 -v
 
     parser = argparse.ArgumentParser(description='Get start times for clips')
     parser.add_argument('in_filename', help='Input filename')
     parser.add_argument('--silence-threshold', default=DEFAULT_THRESHOLD, type=int, help='Silence threshold (in dB)')
     parser.add_argument('--silence-duration', default=DEFAULT_DURATION, type=float, help='Silence duration')
     parser.add_argument('--startms', default=0, type=int, help='Start ms')
-    parser.add_argument('--endms', default=120000, type=int, help='End ms')
+    parser.add_argument('--endms', type=int, help='End ms')
     parser.add_argument('-v', dest='verbose', action='store_true', help='Verbose mode')
+    parser.add_argument('--raw', dest='raw', action='store_true', help='Raw chunks only')
 
     args = parser.parse_args()
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG, format='%(levels): %(message)s')
         logger.setLevel(logging.DEBUG)
 
-    ct = segment_start_times(
-        in_filename = args.in_filename,
-        silence_threshold = args.silence_threshold,
-        silence_duration = args.silence_duration,
-        min_duration_ms = 5000.0,
-        start_ms = args.startms,
-        end_ms = args.endms
-    )
-    durations = [
-        ct[i + 1] - ct[i]
-        for i in range(0, len(ct) - 1)
-    ]
+    ref_start = 0
+    def onChunkStartFound(ms):
+        global ref_start
+        if (ms - ref_start > 60000):
+            print(pact.utils.TimeUtils.time_string(ms))
+            ref_start = ms
 
-    print(f'count of chunks: {len(ct)}')
-    print(f'min duration: {min(durations)}')
-    print('First 10:')
-    for c in ct[0:10]:
-        print(pact.utils.TimeUtils.time_string(c))
+    if args.raw:
+        rc = raw_chunks(
+            in_filename = args.in_filename,
+            silence_threshold = args.silence_threshold,
+            silence_duration = args.silence_duration,
+            start_ms = args.startms,
+            end_ms = args.endms,
+            onChunkStartFound = onChunkStartFound
+        )
+
+        print('\n\n')
+        print('First, last 5 raw chunks:')
+        for c in rc[0:5]:
+            print(c)
+        print('...')
+        for c in rc[-6:-1]:
+            print(c)
+        print(f'{len(rc)} chunks')
+        sys.exit(0)
+
+    else:
+        ct = segment_start_times(
+            in_filename = args.in_filename,
+            silence_threshold = args.silence_threshold,
+            silence_duration = args.silence_duration,
+            min_duration_ms = 5000.0,
+            start_ms = args.startms,
+            end_ms = args.endms,
+            onChunkStartFound = onChunkStartFound
+        )
+        durations = [
+            ct[i + 1] - ct[i]
+            for i in range(0, len(ct) - 1)
+        ]
+
+        print(f'count of chunks: {len(ct)}')
+        if len(durations) > 0:
+            print(f'min duration: {min(durations)}')
+        print('First 10:')
+        for c in ct[0:10]:
+            print(pact.utils.TimeUtils.time_string(c))
