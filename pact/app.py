@@ -1143,14 +1143,26 @@ class BookmarkWindow(object):
         ) + ['-nostats'],  # FIXME: use .nostats() once it's implemented in ffmpeg-python.
         sp = subprocess.Popen(cmd[0], stderr = subprocess.PIPE, stdout = subprocess.PIPE)
         out = sp.communicate()[0]
-        signal2 = np.frombuffer(out, 'int16')
+        rawsignal = np.frombuffer(out, 'int16')
+
+        # Since we're only using the signal to generate a plot, we
+        # don't need real accuracy.  Get the min and max in each
+        # window of the raw data ...  that suffices for visual plots,
+        # and is much faster.
+        def chunks(lst, n):
+            """Yield successive n-sized chunks from lst."""
+            for i in range(0, len(lst), n):
+                yield lst[i:i + n]
+        window_size = 10000  # arbitrary
+        minmax = [ [ min(c), max(c) ] for c in chunks(rawsignal, window_size) ]
+        newsig = [j for sub in minmax for j in sub]  # flatten
 
         time = np.linspace(
             from_val, # start
             to_val,
-            num = len(signal2)
+            num = len(newsig)
         )
-        return (time, signal2)
+        return (time, newsig)
 
 
     def plot(self, frame, width_inches):
