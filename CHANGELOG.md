@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.2.5] 2022-06-13
+
+* Speed improvements: faster plotting, threaded exports.
+
 ## [0.2.4] 2022-06-10
 
 * Add changelog
