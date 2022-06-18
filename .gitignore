@@ -15,6 +15,9 @@ bin/
 samples/
 myplugins/
 
+# Recent session files
+pact/.recent
+
 # Some tests generate artifacts.
 test/generated-ignored/
 

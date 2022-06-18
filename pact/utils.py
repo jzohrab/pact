@@ -2,6 +2,7 @@ from tempfile import NamedTemporaryFile
 import os
 import sys
 import ffmpeg
+import json
 import pydub
 from importlib import import_module
 import time
@@ -91,3 +92,37 @@ def play_beep():
     # Not sure if this is mac-only.
     sys.stdout.write('\a')
     sys.stdout.flush()
+
+
+class Recent:
+    """Handles a 'recent' file listing."""
+    def __init__(self, size, filename):
+        self.size = size
+        self.filename = filename
+        self.entries = []
+        self.load()
+
+    def add(self, top):
+        # I'm sure there's a better way to do this,
+        # but I'm offline and don't know the API.
+
+        # if top is already in the list, remove it.
+        rest = [x for x in self.entries if x != top]
+
+        # Add top as first element.
+        tmp = [top] + rest
+        self.entries = tmp[0:self.size]
+
+    def load(self):
+        entries = []
+        if os.path.exists(self.filename):
+            j = None
+            with open(self.filename, "r") as src:
+                j = json.loads(src.read())
+            entries = j
+        self.entries = entries
+
+    def save(self):
+        j = json.dumps(self.entries, indent = 2)
+        with open(self.filename, "w") as dest:
+            dest.write(j)

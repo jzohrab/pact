@@ -90,6 +90,8 @@ class MainWindow:
         # now.
         self.session_file = None
 
+        self.recent_sessions = pact.utils.Recent(10, 'pact/.recent')
+
         self.set_title()
 
         # popup window for editing clips, storing as member for testing.
@@ -104,6 +106,19 @@ class MainWindow:
         menu_file.add_command(label='Open transcription', command=self.load_transcription)
         menu_file.add_separator()
         menu_file.add_command(label='Open session', command=self.menu_load_pact_file)
+        menu_recent = Menu(menu_file)
+
+        # "Open recent".  Originally I tried to simply use
+        # "command=lambda: do_stuff(e)" within the loop, every single
+        # menu entry had the same same value for e.  Not sure why,
+        # suspect a funny binding issue.  Using _make_lambda(e)
+        # outside of the loop wonks.
+        def _make_lambda(e):
+            return lambda: self.load_pact_file(e)
+        for e in self.recent_sessions.entries:
+            menu_recent.add_command(label=os.path.basename(e), command=_make_lambda(e))
+        menu_file.add_cascade(menu=menu_recent, label='Open recent')
+
         menu_file.add_command(label='Save session', command=self.menu_save_pact_file)
         menu_file.add_separator()
         menu_file.add_command(label='Close', command=self.quit)
@@ -638,6 +653,8 @@ Update '{fieldname}' in the session file and try again."""
             return
 
         self.session_file = sessionfile
+        self.recent_sessions.add(sessionfile)
+        self.recent_sessions.save()
 
         self.load_mp3(appstate.music_file)
 
